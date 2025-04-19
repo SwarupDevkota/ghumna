@@ -1,0 +1,11 @@
+<svg id="visual" viewBox="0 0 3440 1440" width="3440" height="1440" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+  <rect x="0" y="0" width="3440" height="1440" fill="#FDF6E3"></rect>
+  <!-- First Wave -->
+  <path d="M0 1194L143.3 1194.3C286.7 1194.7 573.3 1195.3 860 1195.2C1146.7 1195 1433.3 1194 1720 1225.7C2006.7 1257.3 2293.3 1321.7 2580 1319.7C2866.7 1317.7 3153.3 1249.3 3296.7 1215.2L3440 1181L3440 1441L3296.7 1441C3153.3 1441 2866.7 1441 2580 1441C2293.3 1441 2006.7 1441 1720 1441C1433.3 1441 1146.7 1441 860 1441C573.3 1441 286.7 1441 143.3 1441L0 1441Z" fill="#FFD700">
+    <animateTransform attributeName="transform" type="translate" values="0,0; 0,10; 0,0" dur="5s" repeatCount="indefinite" />
+  </path>
+  <!-- Second Wave -->
+  <path d="M0 1402L143.3 1391.7C286.7 1381.3 573.3 1360.7 860 1345C1146.7 1329.3 1433.3 1318.7 1720 1308.8C2006.7 1299 2293.3 1290 2580 1296.2C2866.7 1302.3 3153.3 1323.7 3296.7 1334.3L3440 1345L3440 1441L3296.7 1441C3153.3 1441 2866.7 1441 2580 1441C2293.3 1441 2006.7 1441 1720 1441C1433.3 1441 1146.7 1441 860 1441C573.3 1441 286.7 1441 143.3 1441L0 1441Z" fill="#FFC700">
+    <animateTransform attributeName="transform" type="translate" values="0,0; 0,-10; 0,0" dur="6s" repeatCount="indefinite" />
+  </path>
+</svg>

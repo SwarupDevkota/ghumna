@@ -1,0 +1,47 @@
+<svg id="visual" viewBox="0 0 900 600" width="900" height="600" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+  <!-- Background -->
+  <rect x="0" y="0" width="900" height="600" fill="#fdf7e3"></rect>
+
+  <!-- Gradient Definitions -->
+  <defs>
+    <linearGradient id="grad1_0" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8e38e" stop-opacity="1"></stop>
+      <stop offset="100%" stop-color="#f1c977" stop-opacity="1"></stop>
+    </linearGradient>
+    <linearGradient id="grad2_0" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8e38e" stop-opacity="1"></stop>
+      <stop offset="100%" stop-color="#f1c977" stop-opacity="1"></stop>
+    </linearGradient>
+  </defs>
+
+  <!-- First Blob -->
+  <g>
+    <path d="M0 -300C86.4 -284.4 172.8 -268.8 235.8 -215.6C298.7 -162.4 337.2 -71.7 310.8 -11.2C284.4 49.3 193.2 98.6 135.6 157.4C78 216.2 54 284.4 -3.7 299.5C-61.4 314.6 -122.8 276.6 -173.6 224.4C-224.4 172.2 -264.6 105.7 -287.8 40.3C-311 -25 -317.2 -90.4 -284.3 -146.1C-251.5 -201.8 -179.7 -247.8 -112.9 -277.5C-46.2 -307.2 23.1 -320.4 91.5 -330C159.8 -339.6 239.2 -345.7 300 -300Z"
+      fill="url(#grad1_0)">
+      <animateTransform attributeName="transform" type="translate" 
+        values="450,300; 430,320; 470,280; 450,300" 
+        dur="4s" 
+        repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Second Blob -->
+  <g>
+    <path d="M0 300C-86.4 284.4 -172.8 268.8 -235.8 215.6C-298.7 162.4 -337.2 71.7 -310.8 11.2C-284.4 -49.3 -193.2 -98.6 -135.6 -157.4C-78 -216.2 -54 -284.4 3.7 -299.5C61.4 -314.6 122.8 -276.6 173.6 -224.4C224.4 -172.2 264.6 -105.7 287.8 -40.3C311 25 317.2 90.4 284.3 146.1C251.5 201.8 179.7 247.8 112.9 277.5C46.2 307.2 -23.1 320.4 -91.5 330C-159.8 339.6 -239.2 345.7 -300 300Z"
+      fill="url(#grad2_0)">
+      <animateTransform attributeName="transform" type="translate" 
+        values="450,400; 470,380; 430,420; 450,400" 
+        dur="4s" 
+        repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Orbiting Circle -->
+  <circle cx="450" cy="300" r="15" fill="#f1c977">
+    <animateTransform attributeName="transform" type="rotate" 
+      from="0 450 300" 
+      to="360 450 300" 
+      dur="2s" 
+      repeatCount="indefinite"/>
+  </circle>
+</svg>

@@ -1,0 +1,11 @@
+<svg id="visual" viewBox="0 0 3440 1440" width="3440" height="1440" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+  <defs>
+    <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#32a852" />
+      <stop offset="100%" stop-color="#a8e063" />
+    </linearGradient>
+  </defs>
+  <path d="M2269 1440L2132 1152L2166 864L2304 576L2166 288L2097 0L3440 0L3440 288L3440 576L3440 864L3440 1152L3440 1440Z" fill="url(#greenGradient)"></path>
+  <path d="M859 1440L756 1152L893 864L859 576L893 288L859 0L2098 0L2167 288L2305 576L2167 864L2133 1152L2270 1440Z" fill="url(#greenGradient)"></path>
+  <path d="M0 1440L0 1152L0 864L0 576L0 288L0 0L860 0L894 288L860 576L894 864L757 1152L860 1440Z" fill="url(#greenGradient)"></path>
+</svg>
