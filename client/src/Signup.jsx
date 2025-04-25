@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "./ui/button";
-import InputField from "./ui/InputField";
+import InputField from "./ui/Inputfield";
 import { AppContent } from "./context/AppContext";
 import { toast } from "react-toastify";
 import ToastComponent from "./ui/ToastComponent";
