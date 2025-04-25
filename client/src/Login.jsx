@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import InputField from "./ui/InputField";
+import InputField from "./ui/Inputfield";
 import Button from "./ui/button";
 import ToastComponent from "./ui/ToastComponent";
 import { toast } from "react-toastify";

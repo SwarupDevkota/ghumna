@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Hotel, Calendar, Sliders } from "lucide-react"; // Importing Lucide React icons
+import {
+  Hotel,
+  Calendar,
+  Sliders,
+  Users,
+  Map,
+  Star,
+  Clock,
+  Shield,
+} from "lucide-react";
 import "./styles.css";
-
 
 import image from "./assets/mountains.jpg";
 import BookingPage from "./BookingPage";
@@ -11,6 +19,7 @@ import { Link } from "react-router-dom";
 const LandingPage = () => {
   const [dynamicText, setDynamicText] = useState("relax");
   const [fadeIn, setFadeIn] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
 
   // Dynamic text options
   const textOptions = ["explore", "adventure", "relax", "discover"];
@@ -23,16 +32,63 @@ const LandingPage = () => {
         index = (index + 1) % textOptions.length;
         setDynamicText(textOptions[index]);
         setFadeIn(true);
-      }, 500); // Duration of fade-out
-    }, 3000); // Change text every 3 seconds
+      }, 500);
+    }, 3000);
 
-    return () => clearInterval(interval); // Cleanup interval on component unmount
+    // Intersection Observer for animation
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const sections = document.querySelectorAll(".animate-on-scroll");
+    sections.forEach((section) => observer.observe(section));
+
+    return () => {
+      clearInterval(interval);
+      observer.disconnect();
+    };
   }, []);
+
+  const featuredDestinations = [
+    {
+      name: "Pokhara",
+      image:
+        "https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg",
+      description: "Scenic lake city with mountain views",
+      price: "Starting from $299",
+    },
+    {
+      name: "Kathmandu",
+      image:
+        "https://images.pexels.com/photos/2104882/pexels-photo-2104882.jpeg",
+      description: "Cultural heritage and ancient temples",
+      price: "Starting from $249",
+    },
+    {
+      name: "Chitwan",
+      image: "https://images.pexels.com/photos/247431/pexels-photo-247431.jpeg",
+      description: "Wildlife and nature experiences",
+      price: "Starting from $399",
+    },
+  ];
+
+  const statistics = [
+    { icon: <Users />, number: "20K+", label: "Happy Customers" },
+    { icon: <Map />, number: "100+", label: "Destinations" },
+    { icon: <Star />, number: "15K+", label: "Reviews" },
+    { icon: <Shield />, number: "24/7", label: "Support" },
+  ];
 
   return (
     <>
       <div className="min-h-screen bg-image-login bg-cover bg-center relative">
-        {/* Overlay for Better Visibility */}
         <div className="absolute inset-0 bg-black bg-opacity-30"></div>
 
         <div className="relative z-10">
@@ -84,7 +140,6 @@ const LandingPage = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-6 md:px-12">
-              {/* Service 1 - Best Hotels */}
               <Link to="/hotel-bookings" className="no-underline">
                 <div className="flex flex-col items-center bg-white bg-opacity-80 p-6 rounded-lg shadow-lg transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer">
                   <div className="bg-white p-4 rounded-full shadow-md transition-transform duration-300 hover:scale-110">
@@ -100,7 +155,6 @@ const LandingPage = () => {
                   </p>
                 </div>
               </Link>
-              {/* Service 2 */}
               <Link to="/local-events" className="no-underline">
                 <div className="flex flex-col items-center bg-white bg-opacity-80 p-6 rounded-lg shadow-lg transition-transform duration-300 hover:scale-105 hover:shadow-xl">
                   <div className="bg-white p-4 rounded-full shadow-md transition-transform duration-300 hover:scale-110">
@@ -116,8 +170,6 @@ const LandingPage = () => {
                   </p>
                 </div>
               </Link>
-
-              {/* Service 3 */}
               <div className="flex flex-col items-center bg-white bg-opacity-80 p-6 rounded-lg shadow-lg transition-transform duration-300 hover:scale-105 hover:shadow-xl">
                 <div className="bg-white p-4 rounded-full shadow-md transition-transform duration-300 hover:scale-110">
                   <Sliders className="h-10 w-10 text-[#FFD700]" />
@@ -134,7 +186,160 @@ const LandingPage = () => {
           </section>
         </div>
       </div>
+
+      {/* Statistics Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {statistics.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="text-[#FFD700] mb-4 flex justify-center">
+                  {stat.icon}
+                </div>
+                <h3 className="text-4xl font-bold text-gray-800 mb-2">
+                  {stat.number}
+                </h3>
+                <p className="text-gray-600">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Destinations */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
+            Featured Destinations
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {featuredDestinations.map((destination, index) => (
+              <div
+                key={index}
+                className="group relative overflow-hidden rounded-2xl shadow-lg transform hover:scale-105 transition-transform duration-300"
+              >
+                <img
+                  src={destination.image}
+                  alt={destination.name}
+                  className="w-full h-80 object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
+                  <div className="absolute bottom-0 p-6 text-white">
+                    <h3 className="text-2xl font-bold mb-2">
+                      {destination.name}
+                    </h3>
+                    <p className="mb-2">{destination.description}</p>
+                    <p className="text-[#FFD700] font-semibold">
+                      {destination.price}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <BookingPage />
+
+      {/* Image Gallery Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
+            Discover Nepal's Beauty
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              {
+                url: "https://images.pexels.com/photos/2901209/pexels-photo-2901209.jpeg",
+                title: "Mount Everest Base Camp",
+              },
+              {
+                url: "https://images.pexels.com/photos/2901215/pexels-photo-2901215.jpeg",
+                title: "Phewa Lake, Pokhara",
+              },
+              {
+                url: "https://images.pexels.com/photos/5458388/pexels-photo-5458388.jpeg",
+                title: "Boudhanath Stupa",
+              },
+              {
+                url: "https://res.cloudinary.com/dl1xtwusn/image/upload/v1745426077/images_yvh8ou.jpg",
+                title: "Annapurna Range",
+              },
+              {
+                url: "https://images.pexels.com/photos/5458397/pexels-photo-5458397.jpeg",
+                title: "Pashupatinath Temple",
+              },
+              {
+                url: "https://res.cloudinary.com/dl1xtwusn/image/upload/v1745426154/bhaktapur-rainy_kasqlu.jpg",
+                title: "Durbar Square",
+              },
+              {
+                url: "https://res.cloudinary.com/dl1xtwusn/image/upload/v1745421202/download_nau1af.jpg",
+                title: "Himalayan Peaks",
+              },
+              {
+                url: "https://res.cloudinary.com/dl1xtwusn/image/upload/v1745426528/download_4_cdni17.jpg",
+                title: "Traditional Architecture",
+              },
+              {
+                url: "https://images.pexels.com/photos/6612157/pexels-photo-6612157.jpeg",
+                title: "Mountain Village",
+              },
+              {
+                url: "https://res.cloudinary.com/dl1xtwusn/image/upload/v1745426700/1678688853.sidetrackimagenepal-3369877_1920_gc0eqr.jpg",
+                title: "Prayer Flags",
+              },
+              {
+                url: "https://res.cloudinary.com/dl1xtwusn/image/upload/v1742706903/tnoslpmpjqybtjvlvsx3.jpg",
+                title: "Lakeside Resort",
+              },
+              {
+                url: "https://res.cloudinary.com/dl1xtwusn/image/upload/v1745426518/Mangal-Lama-Great-Himalayan-Trail-12-1024x682_mxwc2b.jpg",
+                title: "Mountain Trail",
+              },
+              {
+                url: "https://res.cloudinary.com/dl1xtwusn/image/upload/v1745426301/maxresdefault_klr2lu.jpg",
+                title: "Ancient Temple",
+              },
+              {
+                url: "https://res.cloudinary.com/dl1xtwusn/image/upload/v1745426591/hq720_yrt6dr.jpg",
+                title: "Sunrise at Mountains",
+              },
+              {
+                url: "https://res.cloudinary.com/dl1xtwusn/image/upload/v1745426300/istockphoto-476196494-612x612_sai9uy.jpg",
+                title: "Local Market",
+              },
+              {
+                url: "https://res.cloudinary.com/dl1xtwusn/image/upload/v1745426300/list-of-lakes-blog-banner_kmxrmz.webp",
+                title: "Mountain Lake",
+              },
+            ].map((image, index) => (
+              <div
+                key={index}
+                className={`relative overflow-hidden rounded-lg shadow-lg ${
+                  index === 0 || index === 3
+                    ? "md:col-span-2 md:row-span-2"
+                    : ""
+                }`}
+              >
+                <div className="group aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-lg bg-gray-200">
+                  <img
+                    src={image.url}
+                    alt={image.title}
+                    className="h-full w-full object-cover object-center group-hover:opacity-75 transition-opacity duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                    <p className="text-white text-center font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-4">
+                      {image.title}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Testimonials Section */}
       <section className="py-16 bg-[#f1f1f1]">
@@ -170,7 +375,7 @@ const LandingPage = () => {
               className="group relative bg-white rounded-xl shadow-md overflow-hidden w-80 transition-transform transform hover:scale-105"
             >
               <div className="slide slide1 bg-[#FFD700] h-20 flex items-center justify-center">
-                <span className="text-5xl text-white font-bold">“</span>
+                <span className="text-5xl text-white font-bold">"</span>
               </div>
               <div className="slide slide2 bg-white p-6">
                 <p className="text-gray-700 italic mb-4 text-center">
@@ -190,9 +395,33 @@ const LandingPage = () => {
           ))}
         </div>
       </section>
+
+      {/* Newsletter Section */}
+      <section className="py-20 bg-[#FFD700]">
+        <div className="container mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-8">
+            Subscribe to Our Newsletter
+          </h2>
+          <p className="text-white mb-8 max-w-2xl mx-auto">
+            Stay updated with our latest travel deals, destination guides, and
+            exclusive offers.
+          </p>
+          <div className="max-w-md mx-auto">
+            <div className="flex gap-4">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="flex-1 px-6 py-3 rounded-lg focus:outline-none"
+              />
+              <button className="bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors duration-300">
+                Subscribe
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
     </>
   );
 };
-
 
 export default LandingPage;
