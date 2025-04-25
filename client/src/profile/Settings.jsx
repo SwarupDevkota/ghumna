@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import InputField from "../ui/InputField";
+import InputField from "../ui/Inputfield";
 import { Eye, EyeOff } from "lucide-react";
 import axios from "axios"; // Import axios to make the API request
 import { AppContent } from "../context/AppContext";
