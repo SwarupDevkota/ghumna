@@ -19,8 +19,8 @@ const BookingSummary = ({ selectedRoom, showPaymentMethod = false }) => {
     price,
     checkInDate,
     checkOutDate,
-    maxGuests,
-    selectedRooms,
+    guests, // Now coming from selectedRoom.guests
+    selectedRooms, // Number of rooms selected
     hotelName,
   } = selectedRoom;
 
@@ -91,7 +91,9 @@ const BookingSummary = ({ selectedRoom, showPaymentMethod = false }) => {
             <Users className="h-4 w-4 mr-1" />
             Guests
           </div>
-          <div className="text-right font-semibold">{maxGuests} Guests</div>
+          <div className="text-right font-semibold">
+            {guests} {guests === 1 ? "Guest" : "Guests"}
+          </div>
         </div>
 
         <div className="flex justify-between pb-4 border-b border-gray-200">

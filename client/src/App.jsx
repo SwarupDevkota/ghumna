@@ -28,6 +28,8 @@ import ManageUsers from "./AdminPanel/ManageUsers";
 import HotelierDashboard from "./Hotelier/HotelierDashboard";
 import RoomManagement from "./Hotelier/RoomManagement";
 import AvailabilityDetails from "./Hotelier/AvailabilityDetails";
+import HotelierBookings from "./Hotelier/HotelierBookings";
+import AllBookings from "./AdminPanel/AllBookings";
 
 function App() {
   return (
@@ -48,6 +50,8 @@ function App() {
         <Route path="/fullblogs" element={<BlogsPage />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/admin-bookings" element={<AllBookings />} />
+
         <Route path="/hotel-requests" element={<HotelRequestsPage />} />
         <Route path="/feedback-data" element={<FeedbackPage />} />
         <Route path="/event-registration" element={<EventRegistrationPage />} />
@@ -66,6 +70,8 @@ function App() {
 
         <Route path="/hotelier-dashboard" element={<HotelierDashboard />} />
         <Route path="/hotelier-rooms" element={<RoomManagement />} />
+        <Route path="/hotelier-bookings" element={<HotelierBookings />} />
+
         <Route
           path="/hotelier/availability-details"
           element={<AvailabilityDetails />}

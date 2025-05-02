@@ -1,5 +1,6 @@
-import userModel from "../models/userModel.js";
+import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 
 export const getUserData = async (req, res) => {
   try {
@@ -11,7 +12,7 @@ export const getUserData = async (req, res) => {
     }
 
     // Find user by the provided userId
-    const user = await userModel.findById(userId);
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.json({ success: false, message: "User not found" });
@@ -21,6 +22,7 @@ export const getUserData = async (req, res) => {
     res.json({
       success: true,
       userData: {
+        userId: user._id,
         name: user.name,
         email: user.email,
         isAccountVerified: user.isAccountVerified,
@@ -29,6 +31,7 @@ export const getUserData = async (req, res) => {
         contact: user.contact,
         address: user.address,
         description: user.description,
+        ownedHotel: user.ownedHotels,
       },
     });
   } catch (error) {
@@ -41,7 +44,7 @@ export const getUserData = async (req, res) => {
 export const getAllUsers = async (req, res) => {
   try {
     // Fetch all users from the database
-    const users = await userModel.find(
+    const users = await User.find(
       {},
       "name email role image isAccountVerified createdAt"
     );
@@ -68,7 +71,7 @@ export const deleteUser = async (req, res) => {
         .json({ success: false, message: "User ID is required" });
     }
 
-    const deletedUser = await userModel.findByIdAndDelete(userId);
+    const deletedUser = await User.findByIdAndDelete(userId);
 
     if (!deletedUser) {
       return res
@@ -96,7 +99,7 @@ export const updateProfileImage = async (req, res) => {
     }
 
     // Find the user by email
-    const user = await userModel.findOne({ email });
+    const user = await User.findOne({ email });
     if (!user) {
       return res
         .status(404)
@@ -126,7 +129,7 @@ export const changePassword = async (req, res) => {
 
   try {
     // Fetch the current user (use token or userId to get the user from DB)
-    const user = await userModel.findById(req.body.userId);
+    const user = await User.findById(req.body.userId);
 
     // Verify old password
     const isMatch = await bcrypt.compare(oldPassword, user.password);
@@ -146,5 +149,73 @@ export const changePassword = async (req, res) => {
     res.json({ success: true, message: "Password updated successfully." });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+export const updateUserProfile = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { name, email, contact, address, description } = req.body;
+
+    // Validate userId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID",
+      });
+    }
+
+    // Find user by ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Update only the fields that are provided in the request
+    // (empty strings will be saved if provided)
+    if (req.body.hasOwnProperty("name")) user.name = name;
+    if (req.body.hasOwnProperty("email")) user.email = email;
+    if (req.body.hasOwnProperty("contact")) user.contact = contact;
+    if (req.body.hasOwnProperty("address")) user.address = address;
+    if (req.body.hasOwnProperty("description")) user.description = description;
+
+    // Validate before saving (optional)
+    await user.validate();
+
+    const updatedUser = await user.save();
+
+    // Return the complete updated user data
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        contact: updatedUser.contact,
+        address: updatedUser.address,
+        description: updatedUser.description,
+        // Include any other fields you want to expose
+      },
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+
+    // Handle validation errors
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: error.errors,
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };

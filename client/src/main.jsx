@@ -4,6 +4,7 @@ import App from "./App.jsx";
 import { BrowserRouter } from "react-router-dom";
 import "./App.css";
 import { AppContextProvider } from "./context/AppContext.jsx";
+import "antd/dist/reset.css";
 
 // Get the root element
 const container = document.getElementById("root");

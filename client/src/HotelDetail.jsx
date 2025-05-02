@@ -114,25 +114,6 @@ const HotelDetail = () => {
         </div>
       </div>
 
-      {/* Payment Options */}
-      <div className="mt-10">
-        <h2 className="text-2xl font-semibold mb-3">Payment Options</h2>
-        <div className="flex gap-4">
-          {hotel.paymentOptions?.length > 0 ? (
-            hotel.paymentOptions.map((option, index) => (
-              <span
-                key={index}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm"
-              >
-                {option}
-              </span>
-            ))
-          ) : (
-            <p className="text-gray-500">No payment options available</p>
-          )}
-        </div>
-      </div>
-
       {/* Book Now Button */}
       <div className="mt-10 text-center">
         <button

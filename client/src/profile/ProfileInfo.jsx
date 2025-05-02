@@ -1,31 +1,69 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Mail, Phone, MapPin, Edit, Save, X } from "lucide-react";
 import { AppContent } from "../context/AppContext";
 import axios from "axios";
 
 const ProfileInfo = () => {
   const { userData, setUserData } = useContext(AppContent);
-
   const [editMode, setEditMode] = useState(false);
-  const [updatedUser, setUpdatedUser] = useState(userData);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    contact: "",
+    address: "",
+    description: "",
+  });
 
-  // Handle input changes
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        name: userData.name || "",
+        email: userData.email || "",
+        contact: userData.contact || "",
+        address: userData.address || "",
+        description: userData.description || "",
+      });
+    }
+  }, [userData]);
+
   const handleChange = (e) => {
-    setUpdatedUser({ ...updatedUser, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle form submission (Update user data)
   const handleSave = async () => {
     try {
-      const response = await axios.put(
-        "http://localhost:3000/api/user/update",
-        updatedUser
-      );
-      setUserData(response.data); // Update context state
-      setEditMode(false);
+      // Create an object with only the changed fields
+      const updatedFields = {};
+
+      // Compare each field with the original userData
+      if (formData.name !== userData.name) updatedFields.name = formData.name;
+      if (formData.email !== userData.email)
+        updatedFields.email = formData.email;
+      if (formData.contact !== userData.contact)
+        updatedFields.contact = formData.contact;
+      if (formData.address !== userData.address)
+        updatedFields.address = formData.address;
+      if (formData.description !== userData.description)
+        updatedFields.description = formData.description;
+
+      // Only make the API call if there are changes
+      if (Object.keys(updatedFields).length > 0) {
+        const response = await axios.put(
+          `http://localhost:3000/api/user/update/${userData?.userId}`,
+          updatedFields
+        );
+
+        setUserData(response.data);
+        setEditMode(false);
+        window.location.reload();
+      } else {
+        // No changes were made
+        setEditMode(false);
+      }
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("Failed to update profile.");
+      alert("Failed to update profile. Please try again.");
     }
   };
 
@@ -49,7 +87,7 @@ const ProfileInfo = () => {
               <input
                 type="text"
                 name="name"
-                value={updatedUser.name}
+                value={formData.name}
                 onChange={handleChange}
                 className="mt-1 block w-full p-2 border rounded-md"
               />
@@ -67,7 +105,7 @@ const ProfileInfo = () => {
                 <input
                   type="email"
                   name="email"
-                  value={updatedUser.email}
+                  value={formData.email}
                   onChange={handleChange}
                   className="p-2 border rounded-md w-full"
                 />
@@ -86,7 +124,7 @@ const ProfileInfo = () => {
                 <input
                   type="text"
                   name="contact"
-                  value={updatedUser.contact}
+                  value={formData.contact}
                   onChange={handleChange}
                   className="p-2 border rounded-md w-full"
                 />
@@ -105,7 +143,7 @@ const ProfileInfo = () => {
                 <input
                   type="text"
                   name="address"
-                  value={updatedUser.address}
+                  value={formData.address}
                   onChange={handleChange}
                   className="p-2 border rounded-md w-full"
                 />
@@ -122,42 +160,43 @@ const ProfileInfo = () => {
           {editMode ? (
             <textarea
               name="description"
-              value={updatedUser.description}
+              value={formData.description}
               onChange={handleChange}
               className="mt-1 block w-full p-2 border rounded-md"
+              rows={4}
             />
           ) : (
             <p className="mt-1 text-sm text-gray-900">
-              {userData?.description}
+              {userData?.description || "No bio provided"}
             </p>
           )}
         </div>
 
-        {/* Buttons: Edit, Save, Cancel */}
+        {/* Buttons */}
         <div className="mt-6 flex space-x-3">
           {editMode ? (
             <>
               <button
                 onClick={handleSave}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-green-700 bg-white hover:bg-green-50"
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
               >
-                <Save className="mr-2 h-4 w-4 text-green-500" />
+                <Save className="mr-2 h-4 w-4" />
                 Save
               </button>
               <button
                 onClick={() => setEditMode(false)}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                <X className="mr-2 h-4 w-4 text-red-500" />
+                <X className="mr-2 h-4 w-4" />
                 Cancel
               </button>
             </>
           ) : (
             <button
               onClick={() => setEditMode(true)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              <Edit className="mr-2 h-4 w-4 text-gray-500" />
+              <Edit className="mr-2 h-4 w-4" />
               Edit Profile
             </button>
           )}

@@ -2,9 +2,10 @@ import React, { useState, useContext } from "react";
 import { X } from "lucide-react";
 import { AppContent } from "../context/AppContext";
 
-const RoomModal = ({ isOpen, onClose, onSubmit }) => {
+const RoomModal = ({ isOpen, onClose, onSubmit, editingRoom }) => {
   const { userData } = useContext(AppContent);
   const [previewImage, setPreviewImage] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
@@ -12,13 +13,12 @@ const RoomModal = ({ isOpen, onClose, onSubmit }) => {
   const roomTypes = ["Single", "Double", "Suite", "Deluxe", "Family", "King"];
 
   const [roomData, setRoomData] = useState({
-    count: "",
-    type: "",
-    status: "Available",
-    price: "",
-    guests: "",
+    roomCount: editingRoom?.roomCount || "",
+    type: editingRoom?.type || "",
+    price: editingRoom?.price || "",
+    maxGuests: editingRoom?.maxGuests || "",
+    description: editingRoom?.description || "",
     image: null,
-    description: "",
   });
 
   if (!isOpen) return null;
@@ -36,6 +36,8 @@ const RoomModal = ({ isOpen, onClose, onSubmit }) => {
       const reader = new FileReader();
       reader.onload = () => setPreviewImage(reader.result);
       reader.readAsDataURL(file);
+    } else {
+      setPreviewImage(editingRoom?.images?.[0] || null);
     }
   };
 
@@ -57,65 +59,56 @@ const RoomModal = ({ isOpen, onClose, onSubmit }) => {
       return null;
     }
   };
-
   const handleSubmit = async () => {
     if (
-      !roomData.count ||
+      !roomData.roomCount ||
       !roomData.type ||
       !roomData.price ||
-      !roomData.guests
+      !roomData.maxGuests
     ) {
       alert("Please fill in all required fields.");
       return;
     }
 
-    let image = null;
-    if (roomData.image) {
-      image = await uploadImageToCloudinary(roomData.image);
-      if (!image) {
-        alert("Failed to upload image.");
-        return;
-      }
-    }
-
-    const roomPayload = {
-      roomCount: roomData.count,
-      type: roomData.type,
-      status: roomData.status,
-      price: roomData.price,
-      guests: roomData.guests,
-      description: roomData.description,
-      image,
-      email: userData.email,
-    };
+    setIsUploading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/rooms", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(roomPayload),
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        console.error("🚨 Server Error:", responseData);
-        throw new Error("Failed to save room data.");
+      let imageUrl = editingRoom?.images?.[0] || null;
+      if (roomData.image) {
+        imageUrl = await uploadImageToCloudinary(roomData.image);
+        if (!imageUrl) {
+          alert("Failed to upload image.");
+          return;
+        }
       }
 
-      alert("Room added successfully!");
+      const formData = {
+        roomCount: roomData.roomCount,
+        type: roomData.type,
+        price: roomData.price,
+        maxGuests: roomData.maxGuests,
+        description: roomData.description,
+        image: imageUrl,
+        hotelId: userData.ownedHotel,
+      };
+
+      await onSubmit(formData);
       onClose();
     } catch (error) {
-      console.error("❌ Error adding room:", error);
-      alert("Failed to add room.");
+      console.error("Error:", error);
+      alert("An error occurred. Please try again.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Add New Room</h3>
+          <h3 className="text-lg font-semibold">
+            {editingRoom ? "Edit Room" : "Add New Room"}
+          </h3>
           <button
             onClick={onClose}
             className="text-gray-600 hover:text-gray-800"
@@ -127,11 +120,12 @@ const RoomModal = ({ isOpen, onClose, onSubmit }) => {
         <div className="space-y-3">
           <input
             type="text"
-            name="count"
-            placeholder="Room Count"
-            value={roomData.count}
+            name="roomCount"
+            placeholder="Room Count (i.e.Number of rooms available)"
+            value={roomData.roomCount}
             onChange={handleInputChange}
             className="w-full border p-2 rounded"
+            required
           />
 
           <select
@@ -139,6 +133,7 @@ const RoomModal = ({ isOpen, onClose, onSubmit }) => {
             value={roomData.type}
             onChange={handleInputChange}
             className="w-full border p-2 rounded"
+            required
           >
             <option value="">Select Room Type</option>
             {roomTypes.map((type, idx) => (
@@ -151,38 +146,52 @@ const RoomModal = ({ isOpen, onClose, onSubmit }) => {
           <input
             type="number"
             name="price"
-            placeholder="Price"
+            placeholder="Price per night"
             value={roomData.price}
             onChange={handleInputChange}
             className="w-full border p-2 rounded"
+            required
+            min="0"
           />
+
           <input
             type="number"
-            name="guests"
-            placeholder="Guest Capacity"
-            value={roomData.guests}
+            name="maxGuests"
+            placeholder="Maximum Guests"
+            value={roomData.maxGuests}
             onChange={handleInputChange}
             className="w-full border p-2 rounded"
+            required
+            min="1"
           />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="w-full border p-2 rounded"
-          />
-          {previewImage && (
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Room Image
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="w-full border p-2 rounded"
+            />
+          </div>
+
+          {(previewImage || editingRoom?.images?.[0]) && (
             <img
-              src={previewImage}
+              src={previewImage || editingRoom.images[0]}
               alt="Preview"
-              className="h-20 w-full object-cover rounded-lg"
+              className="h-32 w-full object-contain rounded-lg border"
             />
           )}
+
           <textarea
             name="description"
-            placeholder="Description"
+            placeholder="Room description and amenities"
             value={roomData.description}
             onChange={handleInputChange}
             className="w-full border p-2 rounded"
+            rows="3"
           />
         </div>
 
@@ -190,14 +199,20 @@ const RoomModal = ({ isOpen, onClose, onSubmit }) => {
           <button
             onClick={onClose}
             className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500"
+            disabled={isUploading}
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
+            disabled={isUploading}
           >
-            Add Room
+            {isUploading
+              ? "Processing..."
+              : editingRoom
+              ? "Update"
+              : "Add Room"}
           </button>
         </div>
       </div>

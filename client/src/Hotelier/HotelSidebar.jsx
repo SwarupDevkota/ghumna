@@ -52,7 +52,7 @@ const HotelSidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
         </Link>
 
         <Link
-          to="/hotel-bookings"
+          to="/hotelier-bookings"
           className="flex items-center space-x-4 px-4 py-2 hover:bg-green-500"
         >
           <ClipboardList size={20} />

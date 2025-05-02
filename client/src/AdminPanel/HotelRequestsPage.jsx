@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "./Sidebar";
-import { X, Printer, Download, Filter, Calendar } from "lucide-react";
+import { Printer, Download, Filter, Calendar } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import * as XLSX from "xlsx";
 import FeedbackModal from "../ui/FeedbackModal";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import HotelierDetailsModal from "./HotelierDetailsModal";
 
-const API_URL = "http://localhost:3000/api/hotels/requests";
+const API_URL = "http://localhost:3000/api/hotels";
 
 const HotelRequestsPage = () => {
   const [hotelRequests, setHotelRequests] = useState([]);
-  const [selectedHotel, setSelectedHotel] = useState(null);
+  const [selectedHotelier, setSelectedHotelier] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
@@ -32,9 +33,27 @@ const HotelRequestsPage = () => {
 
   const fetchHotelRequests = async () => {
     try {
-      const response = await axios.get(API_URL);
-      setHotelRequests(response.data || []);
-      setFilteredRequests(response.data || []);
+      const response = await axios.get(`${API_URL}/requests`);
+      const mappedRequests = response.data.data.map((hotel) => ({
+        _id: hotel._id,
+        hotelName: hotel.name,
+        ownerName: hotel.owner?.name || "Unknown",
+        email: hotel.email,
+        phone: hotel.phone,
+        address: hotel.address,
+        description: hotel.description || "N/A",
+        website: hotel.website || "N/A",
+        amenities: hotel.amenities || [],
+        nearbyAttractions: hotel.nearbyAttractions || [],
+        hotelRegistrationDocument: hotel.registrationDocument || "",
+        additionalDocuments: hotel.additionalDocuments || [],
+        images: hotel.images || [],
+        roomTypes: hotel.roomTypes || [],
+        status: hotel.status || "Pending",
+        createdAt: hotel.createdAt,
+      }));
+      setHotelRequests(mappedRequests);
+      setFilteredRequests(mappedRequests);
     } catch (error) {
       console.error("Error fetching hotel requests:", error);
       toast.error("Failed to load hotel requests.");
@@ -50,14 +69,12 @@ const HotelRequestsPage = () => {
   const applyFilters = () => {
     let results = hotelRequests;
 
-    // Filter by hotel name
     if (searchTerm) {
       results = results.filter((request) =>
         request.hotelName.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    // Filter by date range
     if (startDate && endDate) {
       results = results.filter((request) => {
         const requestDate = new Date(request.createdAt);
@@ -140,7 +157,7 @@ const HotelRequestsPage = () => {
   };
 
   const closeModal = () => {
-    setSelectedHotel(null);
+    setSelectedHotelier(null);
   };
 
   const handlePrint = () => {
@@ -184,14 +201,8 @@ const HotelRequestsPage = () => {
         Email: request.email,
         Phone: request.phone,
         Address: request.address,
-        Status: request.status || "Pending",
+        Status: request.status,
         "Room Types": request.roomTypes?.join(", ") || "N/A",
-        "Rooms Available": Object.entries(request.roomsAvailable || {})
-          .map(([type, count]) => `${type}: ${count}`)
-          .join(", "),
-        Prices: Object.entries(request.prices || {})
-          .map(([type, price]) => `${type}: ${price}`)
-          .join(", "),
         Amenities: request.amenities?.join(", ") || "N/A",
         "Request Date": new Date(request.createdAt).toLocaleDateString(),
       }))
@@ -330,20 +341,18 @@ const HotelRequestsPage = () => {
               <thead>
                 <tr className="border-b">
                   <th className="text-left p-2">Hotel</th>
-                  <th className="text-left p-2">Rooms Available</th>
+                  <th className="text-left p-2">Room Types</th>
                   <th className="text-left p-2">Request Received Date</th>
                   <th className="text-left p-2">Status</th>
                   <th className="text-left p-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredRequests.map((request, index) => (
-                  <tr key={index} className="border-b">
+                {filteredRequests.map((request) => (
+                  <tr key={request._id} className="border-b">
                     <td className="p-2">{request.hotelName}</td>
                     <td className="p-2">
-                      {Object.entries(request.roomsAvailable || {})
-                        .map(([type, count]) => `${type}: ${count}`)
-                        .join(", ")}
+                      {request.roomTypes?.join(", ") || "N/A"}
                     </td>
                     <td className="p-2">
                       {new Date(request.createdAt).toLocaleDateString()}
@@ -358,13 +367,13 @@ const HotelRequestsPage = () => {
                             : "status-pending"
                         }`}
                       >
-                        {request.status || "Pending"}
+                        {request.status}
                       </span>
                     </td>
                     <td className="p-2">
                       <button
                         className="bg-blue-500 text-white px-4 py-1 rounded"
-                        onClick={() => setSelectedHotel(request)}
+                        onClick={() => setSelectedHotelier(request)}
                       >
                         Select
                       </button>
@@ -376,164 +385,15 @@ const HotelRequestsPage = () => {
           </div>
         )}
 
-        {/* Enhanced Hotel Details Modal */}
-        {selectedHotel && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-2xl w-[700px] max-h-[85vh] overflow-y-auto">
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-t-2xl py-4 px-6 flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white drop-shadow-md">
-                  {selectedHotel.hotelName}
-                </h2>
-                <button
-                  className="text-white hover:text-gray-200 transition-transform transform hover:scale-110"
-                  onClick={closeModal}
-                >
-                  <X size={28} />
-                </button>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="font-semibold">Owner Name:</p>
-                    <p className="text-gray-700">{selectedHotel.ownerName}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Email:</p>
-                    <p className="text-gray-700">{selectedHotel.email}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Phone:</p>
-                    <p className="text-gray-700">{selectedHotel.phone}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Address:</p>
-                    <p className="text-gray-700">{selectedHotel.address}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="font-semibold">Description:</p>
-                    <p className="text-gray-700">{selectedHotel.description}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="font-semibold">Website:</p>
-                    <a
-                      href={selectedHotel.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-indigo-500 hover:underline"
-                    >
-                      {selectedHotel.website}
-                    </a>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Room Types:</p>
-                    <p className="text-gray-700">
-                      {selectedHotel.roomTypes?.join(", ") || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Rooms Available:</p>
-                    <p className="text-gray-700">
-                      {Object.entries(selectedHotel.roomsAvailable || {})
-                        .map(([type, count]) => `${type}: ${count}`)
-                        .join(", ")}
-                    </p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="font-semibold">Prices:</p>
-                    <p className="text-gray-700">
-                      {Object.entries(selectedHotel.prices || {})
-                        .map(([type, price]) => `${type}: ${price}`)
-                        .join(", ")}
-                    </p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="font-semibold">Amenities:</p>
-                    <p className="text-gray-700">
-                      {selectedHotel.amenities?.join(", ") || "N/A"}
-                    </p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="font-semibold">Nearby Attractions:</p>
-                    <p className="text-gray-700">
-                      {selectedHotel.nearbyAttractions?.join(", ") || "N/A"}
-                    </p>
-                  </div>
-                </div>
+        {/* Hotel Details Modal */}
+        <HotelierDetailsModal
+          selectedHotelier={selectedHotelier}
+          onClose={closeModal}
+          onApprove={approveHotel}
+          onDecline={openFeedbackModal}
+        />
 
-                {/* Images */}
-                {selectedHotel.images?.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="text-xl font-semibold mb-2">Hotel Images</h3>
-                    <div className="grid grid-cols-3 gap-3">
-                      {selectedHotel.images.map((img, idx) => (
-                        <img
-                          key={idx}
-                          src={img}
-                          alt={`Hotel ${idx + 1}`}
-                          className="w-full h-32 object-cover rounded-lg shadow"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Documents */}
-                {selectedHotel.additionalDocuments?.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="text-xl font-semibold mb-2">
-                      Additional Documents
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {selectedHotel.additionalDocuments.map((doc, idx) => (
-                        <img
-                          key={idx}
-                          src={doc}
-                          alt={`Document ${idx + 1}`}
-                          className="w-full h-32 object-cover rounded-lg shadow"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedHotel.hotelRegistrationDocument && (
-                  <div className="mt-6">
-                    <h3 className="text-xl font-semibold mb-2">
-                      Registration Document
-                    </h3>
-                    <img
-                      src={selectedHotel.hotelRegistrationDocument}
-                      alt="Registration Document"
-                      className="w-full h-40 object-cover rounded-lg shadow"
-                    />
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-4 mt-8">
-                  <button
-                    className="bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 shadow-md"
-                    onClick={() =>
-                      approveHotel(selectedHotel._id, selectedHotel.email)
-                    }
-                  >
-                    Approve
-                  </button>
-                  <button
-                    className="bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 shadow-md"
-                    onClick={() =>
-                      openFeedbackModal(selectedHotel._id, selectedHotel.email)
-                    }
-                  >
-                    Decline
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Feedback Modal (Reusable) */}
+        {/* Feedback Modal */}
         <FeedbackModal
           isOpen={isFeedbackModalOpen}
           title="Decline Hotel Request"

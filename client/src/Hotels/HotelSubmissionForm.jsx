@@ -1,119 +1,109 @@
 import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
-import { DollarSign, User, Mail } from "lucide-react";
+import { Building, FileText, Image, ArrowLeft, ArrowRight } from "lucide-react";
 import { AppContent } from "../context/AppContext";
 
 const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
 const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
 
 const HotelSubmissionForm = () => {
   const { userData } = useContext(AppContent);
+
   const [formData, setFormData] = useState({
-    hotelName: "",
-    ownerName: "",
-    email: "",
+    name: "",
+    owner: userData?.userId || "",
+    email: userData?.email || "",
     phone: "",
     address: "",
     description: "",
     website: "",
-    roomsAvailable: {},
-    roomTypes: [],
-    prices: {},
     amenities: [],
     nearbyAttractions: "",
-    hotelRegistrationDocument: null,
+    registrationDocument: null,
     additionalDocuments: [],
     images: [],
-    paymentOptions: [],
-    paymentDetails: {
-      bankName: "",
-      number: "",
-      khaltiQrCode: null,
-      phonePayQrCode: null,
-    },
+    roomTypes: [],
   });
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  const handleNext = () => setCurrentStep((prev) => prev + 1);
-  const handlePrev = () => setCurrentStep((prev) => prev - 1);
+  const steps = [
+    { id: 1, name: "Basic Info", icon: <Building size={18} /> },
+    { id: 2, name: "Documents", icon: <FileText size={18} /> },
+    { id: 3, name: "Media", icon: <Image size={18} /> },
+  ];
 
   useEffect(() => {
     if (userData?.email) {
-      setFormData((prevData) => ({
-        ...prevData,
+      setFormData((prev) => ({
+        ...prev,
         email: userData.email,
+        owner: userData.userId,
       }));
     }
   }, [userData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    if (name.startsWith("prices.")) {
-      const roomType = name.split(".")[1]; // Extract room type (e.g., "single")
-      setFormData((prev) => ({
-        ...prev,
-        prices: { ...prev.prices, [roomType]: Number(value) || 0 },
-      }));
-    } else if (name.startsWith("roomsAvailable.")) {
-      const roomType = name.split(".")[1];
-      setFormData((prev) => ({
-        ...prev,
-        roomsAvailable: {
-          ...prev.roomsAvailable,
-          [roomType]: Number(value) || 0,
-        },
-      }));
-    } else if (name.startsWith("paymentDetails.")) {
-      const field = name.split(".")[1];
-      setFormData((prev) => ({
-        ...prev,
-        paymentDetails: { ...prev.paymentDetails, [field]: value },
-      }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error for this field when user types
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleCheckboxChange = (e) => {
     const { name, checked } = e.target;
+    const category = e.target.dataset.category;
 
-    if (e.target.dataset.category === "amenities") {
-      setFormData((prev) => ({
-        ...prev,
-        amenities: checked
-          ? [...prev.amenities, name]
-          : prev.amenities.filter((amenity) => amenity !== name),
-      }));
-    } else if (e.target.dataset.category === "roomTypes") {
-      setFormData((prev) => ({
-        ...prev,
-        roomTypes: checked
-          ? [...prev.roomTypes, name]
-          : prev.roomTypes.filter((type) => type !== name),
-      }));
-    } else if (e.target.dataset.category === "paymentOptions") {
-      setFormData((prev) => ({
-        ...prev,
-        paymentOptions: checked
-          ? [...prev.paymentOptions, name]
-          : prev.paymentOptions.filter((option) => option !== name),
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [category]: checked
+        ? [...prev[category], name]
+        : prev[category].filter((item) => item !== name),
+    }));
+    // Clear error for this category
+    setErrors((prev) => ({ ...prev, [category]: "" }));
   };
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]:
-        name === "hotelRegistrationDocument" || name.includes("QrCode")
-          ? files[0]
-          : Array.from(files),
+      [name]: name === "registrationDocument" ? files[0] : Array.from(files),
     }));
+    // Clear error for this field
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const validateStep = () => {
+    const newErrors = {};
+
+    if (currentStep === 1) {
+      if (!formData.name) newErrors.name = "Hotel name is required";
+      if (!formData.phone) newErrors.phone = "Phone number is required";
+      if (!formData.address) newErrors.address = "Address is required";
+      if (!formData.description)
+        newErrors.description = "Description is required";
+    } else if (currentStep === 2) {
+      if (!formData.registrationDocument)
+        newErrors.registrationDocument = "Registration document is required";
+    } else if (currentStep === 3) {
+      if (formData.images.length < 3)
+        newErrors.images = "At least 3 images are required";
+      if (formData.roomTypes.length === 0)
+        newErrors.roomTypes = "At least one room type must be selected";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNextStep = () => {
+    if (validateStep()) {
+      setCurrentStep((prev) => prev + 1);
+    }
   };
 
   const uploadToCloudinary = async (file) => {
@@ -125,850 +115,401 @@ const HotelSubmissionForm = () => {
       const response = await fetch(CLOUDINARY_UPLOAD_URL, {
         method: "POST",
         body: data,
-        credentials: "omit", // Explicitly omit credentials
       });
+
       const result = await response.json();
-      return result.secure_url;
+      if (!response.ok)
+        throw new Error(result.error?.message || "Upload failed");
+      return result;
     } catch (error) {
-      console.error("Error uploading to Cloudinary:", error);
+      console.error("Upload error:", error);
       return null;
     }
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateStep()) return;
+
     setLoading(true);
 
     try {
-      // Upload images
-      let uploadedImages = [];
-      for (const image of formData.images) {
-        const url = await uploadToCloudinary(image);
-        if (url) uploadedImages.push(url);
-      }
+      // Upload files
+      const uploadFiles = [
+        formData.registrationDocument &&
+          uploadToCloudinary(formData.registrationDocument),
+        ...formData.additionalDocuments.map((file) => uploadToCloudinary(file)),
+        ...formData.images.map((file) => uploadToCloudinary(file)),
+      ].filter(Boolean);
 
-      // Upload hotel registration document
-      let hotelRegistrationUrl = formData.hotelRegistrationDocument
-        ? await uploadToCloudinary(formData.hotelRegistrationDocument)
-        : null;
+      const uploaded = await Promise.all(uploadFiles);
+      const [regDoc, ...restFiles] = uploaded;
 
-      // Upload additional documents
-      let additionalDocsUrls = [];
-      for (const doc of formData.additionalDocuments) {
-        const url = await uploadToCloudinary(doc);
-        if (url) additionalDocsUrls.push(url);
-      }
-
-      // Upload Khalti QR Code
-      let khaltiQrCodeUrl = formData.paymentDetails.khaltiQrCode
-        ? await uploadToCloudinary(formData.paymentDetails.khaltiQrCode)
-        : null;
-
-      // Upload PhonePay QR Code
-      let phonePayQrCodeUrl = formData.paymentDetails.phonePayQrCode
-        ? await uploadToCloudinary(formData.paymentDetails.phonePayQrCode)
-        : null;
-
-      // Prepare the data object
-      const data = {
+      const dataToSend = {
         ...formData,
-        images: uploadedImages,
-        hotelRegistrationDocument: hotelRegistrationUrl,
-        additionalDocuments: additionalDocsUrls,
-        paymentDetails: {
-          ...formData.paymentDetails,
-          khaltiQrCode: khaltiQrCodeUrl, // Assign the uploaded Khalti QR Code URL
-          phonePayQrCode: phonePayQrCodeUrl, // Assign the uploaded PhonePay QR Code URL
-        },
+        registrationDocument: regDoc?.secure_url || "",
+        additionalDocuments: restFiles
+          .slice(0, formData.additionalDocuments.length)
+          .map((doc) => doc?.secure_url)
+          .filter(Boolean),
+        images: restFiles
+          .slice(formData.additionalDocuments.length)
+          .map((img) => img?.secure_url)
+          .filter(Boolean),
+        nearbyAttractions: formData.nearbyAttractions
+          ? formData.nearbyAttractions.split(",").map((a) => a.trim())
+          : [],
       };
 
-      // Log the data being sent to the backend
-      console.log("Data being sent to the backend:", data);
+      console.log("Data to send to backend:", dataToSend);
 
-      // Send data to the backend
-      const response = await axios.post(
-        "http://localhost:3000/api/hotels/submit",
-        data
-      );
-      console.log("Response:", response.data);
+      await axios.post("http://localhost:3000/api/hotels/submit", dataToSend);
       alert("Hotel submitted successfully!");
     } catch (error) {
-      console.error("Error submitting form:", error);
-      alert("Failed to submit the form.");
+      console.error("Submission error:", error);
+      alert("Failed to submit hotel.");
     } finally {
       setLoading(false);
     }
   };
 
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            {/* Hotel Name */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">
+                Hotel Name
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                  errors.name ? "border-red-500" : ""
+                }`}
+                required
+              />
+              {errors.name && (
+                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+              )}
+            </div>
+
+            {/* Phone and Email */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                    errors.phone ? "border-red-500" : ""
+                  }`}
+                  required
+                />
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                )}
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-500"
+                  disabled
+                />
+              </div>
+            </div>
+
+            {/* Address */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">
+                Address
+              </label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                  errors.address ? "border-red-500" : ""
+                }`}
+                required
+              />
+              {errors.address && (
+                <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+              )}
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={3}
+                className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 ${
+                  errors.description ? "border-red-500" : ""
+                }`}
+                required
+              />
+              {errors.description && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.description}
+                </p>
+              )}
+            </div>
+
+            {/* Website */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">
+                Website
+              </label>
+              <input
+                type="url"
+                name="website"
+                value={formData.website}
+                onChange={handleChange}
+                placeholder="https://example.com"
+                className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Amenities */}
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Amenities
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {["wifi", "parking", "pool", "gym", "restaurant", "spa"].map(
+                  (amenity) => (
+                    <div key={amenity} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={amenity}
+                        name={amenity}
+                        data-category="amenities"
+                        checked={formData.amenities.includes(amenity)}
+                        onChange={handleCheckboxChange}
+                        className="h-4 w-4 text-blue-600 rounded"
+                      />
+                      <label
+                        htmlFor={amenity}
+                        className="ml-2 text-sm capitalize"
+                      >
+                        {amenity}
+                      </label>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-4">
+            {/* Registration and Additional Documents */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">
+                Registration Document
+              </label>
+              <input
+                type="file"
+                name="registrationDocument"
+                onChange={handleFileChange}
+                className={`w-full p-2 border rounded-md ${
+                  errors.registrationDocument ? "border-red-500" : ""
+                }`}
+                accept="image/*"
+                required
+              />
+              {errors.registrationDocument && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.registrationDocument}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">
+                Additional Documents
+              </label>
+              <input
+                type="file"
+                name="additionalDocuments"
+                onChange={handleFileChange}
+                className="w-full p-2 border rounded-md"
+                multiple
+                accept="image/*"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">
+                Nearby Attractions (comma separated)
+              </label>
+              <input
+                type="text"
+                name="nearbyAttractions"
+                value={formData.nearbyAttractions}
+                onChange={handleChange}
+                className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                placeholder="Beach, Museum, Park"
+              />
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-4">
+            {/* Hotel Images */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">
+                Hotel Images
+              </label>
+              <input
+                type="file"
+                name="images"
+                onChange={handleFileChange}
+                className={`w-full p-2 border rounded-md ${
+                  errors.images ? "border-red-500" : ""
+                }`}
+                multiple
+                accept="image/*"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Upload at least 3 images
+              </p>
+              {errors.images && (
+                <p className="text-red-500 text-xs mt-1">{errors.images}</p>
+              )}
+            </div>
+
+            {/* Room Types */}
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Room Types
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {["single", "double", "suite", "family", "deluxe"].map(
+                  (type) => (
+                    <div key={type} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={type}
+                        name={type}
+                        data-category="roomTypes"
+                        checked={formData.roomTypes.includes(type)}
+                        onChange={handleCheckboxChange}
+                        className="h-4 w-4 text-blue-600 rounded"
+                      />
+                      <label htmlFor={type} className="ml-2 text-sm capitalize">
+                        {type}
+                      </label>
+                    </div>
+                  )
+                )}
+              </div>
+              {errors.roomTypes && (
+                <p className="text-red-500 text-xs mt-1">{errors.roomTypes}</p>
+              )}
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-100">
-      <div className="flex justify-center items-center space-x-4 mb-8">
-        <div
-          className={`flex items-center ${
-            currentStep >= 1 ? "text-indigo-600" : "text-gray-400"
-          }`}
-        >
-          <DollarSign className="w-6 h-6" />
-          <span className="ml-2">1. Hotel Details</span>
-        </div>
-        <div
-          className={`flex items-center ${
-            currentStep >= 2 ? "text-indigo-600" : "text-gray-400"
-          }`}
-        >
-          <User className="w-6 h-6" />
-          <span className="ml-2">2. Documents & Images</span>
-        </div>
-        <div
-          className={`flex items-center ${
-            currentStep >= 3 ? "text-indigo-600" : "text-gray-400"
-          }`}
-        >
-          <Mail className="w-6 h-6" />
-          <span className="ml-2">3. Payment Info</span>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            Register Your Hotel
+          </h2>
 
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {currentStep === 1 && (
-            <>
-              <div>
-                <label
-                  htmlFor="hotelName"
-                  className="block text-sm font-medium text-gray-700"
+          {/* Stepper */}
+          <div className="flex justify-between mb-8">
+            {steps.map((step) => (
+              <div key={step.id} className="flex flex-col items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    currentStep >= step.id
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
                 >
-                  Hotel Name
-                </label>
-                <input
-                  type="text"
-                  id="hotelName"
-                  name="hotelName"
-                  value={formData.hotelName}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Your Hotel Name"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="ownerName"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Owner's Name
-                </label>
-                <input
-                  type="text"
-                  id="ownerName"
-                  name="ownerName"
-                  value={formData.ownerName}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Owner's Full Name"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 cursor-not-allowed"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="123-456-7890"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="address"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Address
-                </label>
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Hotel Address"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Hotel Description"
-                ></textarea>
-              </div>
-              <div>
-                <label
-                  htmlFor="website"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Website
-                </label>
-                <input
-                  type="url"
-                  id="website"
-                  name="website"
-                  value={formData.website}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="https://yourwebsite.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Room Types
-                </label>
-                <div className="grid grid-cols-3 gap-4">
-                  {["single", "double", "suite"].map((roomType) => (
-                    <div key={roomType} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={roomType}
-                        name={roomType}
-                        data-category="roomTypes"
-                        checked={formData.roomTypes.includes(roomType)}
-                        onChange={handleCheckboxChange}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <label
-                        htmlFor={roomType}
-                        className="ml-2 text-sm text-gray-700 capitalize"
-                      >
-                        {roomType}
-                      </label>
-                    </div>
-                  ))}
+                  {step.icon}
                 </div>
-              </div>
-
-              {/* Price and Availability for Selected Room Types */}
-              {formData.roomTypes.map((roomType) => (
-                <div key={roomType}>
-                  <label
-                    htmlFor={`${roomType}-price`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    {`Price for ${
-                      roomType.charAt(0).toUpperCase() + roomType.slice(1)
-                    } Room ($)`}
-                  </label>
-                  <input
-                    type="number"
-                    id={`${roomType}-price`}
-                    name={`prices.${roomType}`}
-                    value={formData.prices[roomType] || ""}
-                    onChange={handleChange}
-                    required
-                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Enter price"
-                    min="0"
-                  />
-
-                  <label
-                    htmlFor={`${roomType}-availability`}
-                    className="block text-sm font-medium text-gray-700 mt-4"
-                  >
-                    {`Available ${
-                      roomType.charAt(0).toUpperCase() + roomType.slice(1)
-                    } Rooms`}
-                  </label>
-                  <input
-                    type="number"
-                    id={`${roomType}-availability`}
-                    name={`roomsAvailable.${roomType}`}
-                    value={formData.roomsAvailable[roomType] || ""}
-                    onChange={handleChange}
-                    required
-                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder={`Enter available ${roomType} rooms`}
-                    min="0"
-                  />
-                </div>
-              ))}
-
-              {/* Amenities */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Amenities
-                </label>
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    "wifi",
-                    "parking",
-                    "swimmingPool",
-                    "gym",
-                    "pickup",
-                    "restaurantBar",
-                  ].map((amenity) => (
-                    <div key={amenity} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={amenity}
-                        name={amenity}
-                        data-category="amenities"
-                        checked={formData.amenities.includes(amenity)}
-                        onChange={handleCheckboxChange}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <label
-                        htmlFor={amenity}
-                        className="ml-2 text-sm text-gray-700 capitalize"
-                      >
-                        {amenity.replace(/([A-Z])/g, " $1")}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Nearby Attractions */}
-              <div>
-                <label
-                  htmlFor="nearbyAttractions"
-                  className="block text-sm font-medium text-gray-700"
+                <span
+                  className={`text-sm mt-2 ${
+                    currentStep >= step.id
+                      ? "text-blue-600 font-medium"
+                      : "text-gray-500"
+                  }`}
                 >
-                  Nearby Attractions
-                </label>
-                <textarea
-                  id="nearbyAttractions"
-                  name="nearbyAttractions"
-                  value={formData.nearbyAttractions}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., Beach, Museum, Park..."
-                ></textarea>
+                  {step.name}
+                </span>
               </div>
+            ))}
+          </div>
 
-              <div className="flex justify-between">
+          <form onSubmit={handleSubmit}>
+            {renderStep()}
+
+            <div className="flex justify-between mt-8">
+              {currentStep > 1 && (
                 <button
                   type="button"
-                  onClick={handleNext}
-                  className="bg-indigo-600 text-white p-2 rounded-md shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  onClick={() => setCurrentStep((prev) => prev - 1)}
+                  className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
                 >
-                  Next
-                </button>
-              </div>
-            </>
-          )}
-
-          {currentStep === 2 && (
-            <>
-              <div>
-                <label
-                  htmlFor="hotelRegistrationDocument"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Upload Hotel Registration Document
-                </label>
-                <input
-                  type="file"
-                  id="hotelRegistrationDocument"
-                  name="hotelRegistrationDocument"
-                  onChange={handleFileChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="additionalDocuments"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Upload Additional Documents
-                </label>
-                <input
-                  type="file"
-                  id="additionalDocuments"
-                  name="additionalDocuments"
-                  onChange={handleFileChange}
-                  multiple
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="ownerName"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Owner's Name
-                </label>
-                <input
-                  type="text"
-                  id="ownerName"
-                  name="ownerName"
-                  value={formData.ownerName}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Owner's Full Name"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="owner@example.com"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="123-456-7890"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="address"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Address
-                </label>
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Hotel Address"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Hotel Description"
-                ></textarea>
-              </div>
-              <div>
-                <label
-                  htmlFor="website"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Website
-                </label>
-                <input
-                  type="url"
-                  id="website"
-                  name="website"
-                  value={formData.website}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="https://yourwebsite.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Room Types
-                </label>
-                <div className="grid grid-cols-3 gap-4">
-                  {["single", "double", "suite"].map((roomType) => (
-                    <div key={roomType} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={roomType}
-                        name={roomType}
-                        data-category="roomTypes"
-                        checked={formData.roomTypes.includes(roomType)}
-                        onChange={handleCheckboxChange}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <label
-                        htmlFor={roomType}
-                        className="ml-2 text-sm text-gray-700 capitalize"
-                      >
-                        {roomType}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Price and Availability for Selected Room Types */}
-              {formData.roomTypes.map((roomType) => (
-                <div key={roomType}>
-                  <label
-                    htmlFor={`${roomType}-price`}
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    {`Price for ${
-                      roomType.charAt(0).toUpperCase() + roomType.slice(1)
-                    } Room ($)`}
-                  </label>
-                  <input
-                    type="number"
-                    id={`${roomType}-price`}
-                    name={`prices.${roomType}`}
-                    value={formData.prices[roomType] || ""}
-                    onChange={handleChange}
-                    required
-                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Enter price"
-                    min="0"
-                  />
-
-                  <label
-                    htmlFor={`${roomType}-availability`}
-                    className="block text-sm font-medium text-gray-700 mt-4"
-                  >
-                    {`Available ${
-                      roomType.charAt(0).toUpperCase() + roomType.slice(1)
-                    } Rooms`}
-                  </label>
-                  <input
-                    type="number"
-                    id={`${roomType}-availability`}
-                    name={`roomsAvailable.${roomType}`}
-                    value={formData.roomsAvailable[roomType] || ""}
-                    onChange={handleChange}
-                    required
-                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder={`Enter available ${roomType} rooms`}
-                    min="0"
-                  />
-                </div>
-              ))}
-
-              {/* Amenities */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Amenities
-                </label>
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    "wifi",
-                    "parking",
-                    "swimmingPool",
-                    "gym",
-                    "pickup",
-                    "restaurantBar",
-                  ].map((amenity) => (
-                    <div key={amenity} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={amenity}
-                        name={amenity}
-                        data-category="amenities"
-                        checked={formData.amenities.includes(amenity)}
-                        onChange={handleCheckboxChange}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <label
-                        htmlFor={amenity}
-                        className="ml-2 text-sm text-gray-700 capitalize"
-                      >
-                        {amenity.replace(/([A-Z])/g, " $1")}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Nearby Attractions */}
-              <div>
-                <label
-                  htmlFor="nearbyAttractions"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Nearby Attractions
-                </label>
-                <textarea
-                  id="nearbyAttractions"
-                  name="nearbyAttractions"
-                  value={formData.nearbyAttractions}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., Beach, Museum, Park..."
-                ></textarea>
-              </div>
-
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="bg-indigo-600 text-white p-2 rounded-md shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                  Next
-                </button>
-              </div>
-            </>
-          )}
-
-          {currentStep === 2 && (
-            <>
-              <div>
-                <label
-                  htmlFor="hotelRegistrationDocument"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Upload Hotel Registration Document
-                </label>
-                <input
-                  type="file"
-                  id="hotelRegistrationDocument"
-                  name="hotelRegistrationDocument"
-                  onChange={handleFileChange}
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="additionalDocuments"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Upload Additional Documents
-                </label>
-                <input
-                  type="file"
-                  id="additionalDocuments"
-                  name="additionalDocuments"
-                  onChange={handleFileChange}
-                  multiple
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="images"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Upload Images
-                </label>
-                <input
-                  type="file"
-                  id="images"
-                  name="images"
-                  onChange={handleFileChange}
-                  multiple
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={handlePrev}
-                  className="bg-gray-500 text-white p-2 rounded-md shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
-                >
+                  <ArrowLeft size={16} className="mr-2" />
                   Back
                 </button>
+              )}
+
+              {currentStep < steps.length ? (
                 <button
                   type="button"
-                  onClick={handleNext}
-                  className="bg-indigo-600 text-white p-2 rounded-md shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  onClick={handleNextStep}
+                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
                 >
                   Next
+                  <ArrowRight size={16} className="ml-2" />
                 </button>
-              </div>
-            </>
-          )}
-          {currentStep === 3 && (
-            <>
-              {/* Payment Options */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Payment Options
-                </label>
-                <div className="grid grid-cols-2 gap-4">
-                  {["khalti", "phonePay", "cash"].map((option) => (
-                    <div key={option} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={option}
-                        name={option}
-                        data-category="paymentOptions"
-                        checked={formData.paymentOptions.includes(option)}
-                        onChange={handleCheckboxChange}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <label
-                        htmlFor={option}
-                        className="ml-2 text-sm text-gray-700 capitalize"
-                      >
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Render fields dynamically for selected payment options except Cash */}
-              {formData.paymentOptions
-                .filter((option) => option !== "cash")
-                .map((option) => (
-                  <div key={option} className="mt-4">
-                    <h3 className="text-sm font-medium text-gray-700 capitalize">
-                      {`${option} Payment Details`}
-                    </h3>
-                    <div className="mt-2">
-                      <label
-                        htmlFor={`paymentDetails.${option}BankName`}
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Bank Name
-                      </label>
-                      <input
-                        type="text"
-                        id={`paymentDetails.${option}BankName`}
-                        name={`paymentDetails.${option}BankName`}
-                        value={
-                          formData.paymentDetails[`${option}BankName`] || ""
-                        }
-                        onChange={handleChange}
-                        required
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="Enter bank name"
-                      />
-                    </div>
-                    <div className="mt-2">
-                      <label
-                        htmlFor={`paymentDetails.${option}Number`}
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Account/Phone Number
-                      </label>
-                      <input
-                        type="text"
-                        id={`paymentDetails.${option}Number`}
-                        name={`paymentDetails.${option}Number`}
-                        value={formData.paymentDetails[`${option}Number`] || ""}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="Enter account/phone number"
-                      />
-                    </div>
-                    <div className="mt-2">
-                      <label
-                        htmlFor={`paymentDetails.${option}QrCode`}
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Upload QR Code
-                      </label>
-                      <input
-                        type="file"
-                        id={`paymentDetails.${option}QrCode`}
-                        name={`paymentDetails.${option}QrCode`}
-                        onChange={handleFileChange}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        accept="image/*"
-                      />
-                    </div>
-
-                    {/* Show QR Code Preview */}
-                    {formData.paymentDetails[`${option}QrCode`] && (
-                      <div className="mt-4">
-                        <img
-                          src={URL.createObjectURL(
-                            formData.paymentDetails[`${option}QrCode`]
-                          )}
-                          alt={`${option} QR Code`}
-                          className="h-24 w-24 object-cover rounded-md shadow-sm"
-                        />
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-              <div className="flex justify-between mt-8">
-                <button
-                  type="button"
-                  onClick={handlePrev}
-                  className="bg-gray-500 text-white p-2 rounded-md shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
-                >
-                  Back
-                </button>
+              ) : (
                 <button
                   type="submit"
-                  className="bg-indigo-600 text-white p-2 rounded-md shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  disabled={loading}
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
                 >
-                  Submit
+                  {loading ? "Submitting..." : "Submit Hotel"}
                 </button>
-              </div>
-            </>
-          )}
-        </form>
+              )}
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

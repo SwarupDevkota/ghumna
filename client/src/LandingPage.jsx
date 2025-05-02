@@ -95,7 +95,7 @@ const LandingPage = () => {
           {/* Header Section */}
           <header className="flex flex-col md:flex-row items-center justify-between px-6 md:px-12 py-10">
             <div className="max-w-lg text-center md:text-left text-white">
-              <h1 className="text-[#FFD700] text-sm font-bold uppercase mb-2">
+              <h1 className="text-amber-600 text-sm font-bold uppercase mb-2">
                 Best destination in Nepal and abroad
               </h1>
               <h2 className="text-4xl md:text-5xl font-extrabold leading-tight">
@@ -115,7 +115,7 @@ const LandingPage = () => {
                 GHUMNA JAM provides the best experience for travelers to travel
                 in Nepal and abroad in different countries across.
               </p>
-              <button className="mt-6 px-6 py-3 bg-[#FFDF00] text-black text-lg font-medium rounded-lg hover:bg-[#FFD700] transition duration-300">
+              <button className="mt-6 px-6 py-3 bg-[#FFDF00] text-black text-lg font-medium rounded-lg hover:bg-amber-600 transition duration-300">
                 Find out more
               </button>
             </div>
@@ -143,7 +143,7 @@ const LandingPage = () => {
               <Link to="/hotel-bookings" className="no-underline">
                 <div className="flex flex-col items-center bg-white bg-opacity-80 p-6 rounded-lg shadow-lg transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer">
                   <div className="bg-white p-4 rounded-full shadow-md transition-transform duration-300 hover:scale-110">
-                    <Hotel className="h-10 w-10 text-[#FFD700]" />
+                    <Hotel className="h-10 w-10 text-amber-600" />
                   </div>
                   <h3 className="text-lg font-bold mt-6 text-gray-800">
                     Best Hotels
@@ -158,7 +158,7 @@ const LandingPage = () => {
               <Link to="/local-events" className="no-underline">
                 <div className="flex flex-col items-center bg-white bg-opacity-80 p-6 rounded-lg shadow-lg transition-transform duration-300 hover:scale-105 hover:shadow-xl">
                   <div className="bg-white p-4 rounded-full shadow-md transition-transform duration-300 hover:scale-110">
-                    <Calendar className="h-10 w-10 text-[#FFD700]" />
+                    <Calendar className="h-10 w-10 text-amber-600" />
                   </div>
                   <h3 className="text-lg font-bold mt-6 text-gray-800">
                     Local Events
@@ -172,7 +172,7 @@ const LandingPage = () => {
               </Link>
               <div className="flex flex-col items-center bg-white bg-opacity-80 p-6 rounded-lg shadow-lg transition-transform duration-300 hover:scale-105 hover:shadow-xl">
                 <div className="bg-white p-4 rounded-full shadow-md transition-transform duration-300 hover:scale-110">
-                  <Sliders className="h-10 w-10 text-[#FFD700]" />
+                  <Sliders className="h-10 w-10 text-amber-600" />
                 </div>
                 <h3 className="text-lg font-bold mt-6 text-gray-800">
                   Customization
@@ -193,7 +193,7 @@ const LandingPage = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {statistics.map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="text-[#FFD700] mb-4 flex justify-center">
+                <div className="text-amber-600 mb-4 flex justify-center">
                   {stat.icon}
                 </div>
                 <h3 className="text-4xl font-bold text-gray-800 mb-2">
@@ -229,7 +229,7 @@ const LandingPage = () => {
                       {destination.name}
                     </h3>
                     <p className="mb-2">{destination.description}</p>
-                    <p className="text-[#FFD700] font-semibold">
+                    <p className="text-amber-600 font-semibold">
                       {destination.price}
                     </p>
                   </div>
@@ -374,7 +374,7 @@ const LandingPage = () => {
               key={index}
               className="group relative bg-white rounded-xl shadow-md overflow-hidden w-80 transition-transform transform hover:scale-105"
             >
-              <div className="slide slide1 bg-[#FFD700] h-20 flex items-center justify-center">
+              <div className="slide slide1 bg-amber-600 h-20 flex items-center justify-center">
                 <span className="text-5xl text-white font-bold">"</span>
               </div>
               <div className="slide slide2 bg-white p-6">
@@ -387,7 +387,7 @@ const LandingPage = () => {
                 <p className="text-sm text-center text-gray-500 mb-2">
                   {item.role}
                 </p>
-                <div className="flex justify-center text-[#FFD700] text-lg">
+                <div className="flex justify-center text-amber-600 text-lg">
                   {"★".repeat(item.rating)}
                 </div>
               </div>
@@ -397,7 +397,7 @@ const LandingPage = () => {
       </section>
 
       {/* Newsletter Section */}
-      <section className="py-20 bg-[#FFD700]">
+      <section className="py-20 bg-amber-500">
         <div className="container mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-8">
             Subscribe to Our Newsletter

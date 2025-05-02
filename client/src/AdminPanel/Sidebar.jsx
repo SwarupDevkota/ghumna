@@ -97,10 +97,18 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
           <Users size={20} />
           {isSidebarOpen && <span>Manage Users</span>}
         </Link>
+
+        <Link
+          to="/admin-bookings"
+          className="flex items-center space-x-4 px-4 py-2 hover:bg-blue-500"
+        >
+          <Users size={20} />
+          {isSidebarOpen && <span>All Bookings</span>}
+        </Link>
       </nav>
     </div>
   );
 };
 
 export default Sidebar;
-// eng 
+// eng

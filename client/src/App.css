@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 
+
+
 /* Add these styles to your global CSS file */
 .animate-on-scroll {
     will-change: opacity, transform;

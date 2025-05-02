@@ -1,11 +1,10 @@
 import React, { useContext, useState, useEffect } from "react";
-import { Calendar, Hotel, Users, CreditCard, CalendarDays } from "lucide-react";
+import { Calendar, Hotel, Users, Tag } from "lucide-react";
 import { AppContent } from "../context/AppContext";
 import axios from "axios";
 import {
   Modal,
   Card,
-  Tag,
   Button,
   Divider,
   Row,
@@ -13,9 +12,10 @@ import {
   Image,
   Empty,
   Spin,
+  Tag as AntTag,
 } from "antd";
 
-const Applications = () => {
+const AvailabilityRequests = () => {
   const { userData } = useContext(AppContent);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,9 +26,9 @@ const Applications = () => {
     const fetchApplications = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3000/api/booking/applications/${userData?.userId}`
+          `http://localhost:3000/api/rooms/availability/user/${userData?.userId}`
         );
-        setApplications(response.data.applications);
+        setApplications(response.data.data);
       } catch (error) {
         console.error("Error fetching applications:", error);
       } finally {
@@ -46,6 +46,19 @@ const Applications = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case "approved":
+        return "text-green-600";
+      case "pending":
+        return "text-amber-600";
+      case "rejected":
+        return "text-red-600";
+      default:
+        return "text-gray-600";
+    }
+  };
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -55,10 +68,10 @@ const Applications = () => {
   }
 
   return (
-    <Card title="My Bookings" bordered={false} className="shadow-sm">
+    <Card title="Availability Requests" bordered={false} className="shadow-sm">
       {applications?.length > 0 ? (
         <div className="overflow-hidden">
-          <Divider orientation="left">Your Bookings</Divider>
+          <Divider orientation="left">Your Availability Requests</Divider>
           <div className="space-y-4">
             {applications.map((booking) => (
               <Card
@@ -67,20 +80,9 @@ const Applications = () => {
               >
                 <Row gutter={16} align="middle">
                   <Col xs={24} sm={4}>
-                    {booking.hotel?.images?.[0] ? (
-                      <Image
-                        src={booking.hotel.images[0]}
-                        alt={booking.hotel.name}
-                        width={80}
-                        height={80}
-                        className="rounded-md object-cover"
-                        preview={false}
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-md bg-gray-200 flex items-center justify-center">
-                        <Hotel className="h-8 w-8 text-gray-400" />
-                      </div>
-                    )}
+                    <div className="w-20 h-20 rounded-md bg-gray-200 flex items-center justify-center">
+                      <Hotel className="h-8 w-8 text-gray-400" />
+                    </div>
                   </Col>
                   <Col xs={24} sm={12}>
                     <h4 className="text-lg font-medium truncate">
@@ -88,24 +90,32 @@ const Applications = () => {
                     </h4>
                     <div className="flex flex-wrap gap-4 mt-2">
                       <span className="inline-flex items-center text-sm text-gray-500">
-                        <CalendarDays className="h-3 w-3 mr-1" />
+                        <Calendar className="h-3 w-3 mr-1" />
                         {formatDate(booking.checkInDate)} -{" "}
                         {formatDate(booking.checkOutDate)}
                       </span>
                       <span className="inline-flex items-center text-sm text-gray-500">
                         <Users className="h-3 w-3 mr-1" />
-                        {booking.numberOfGuests} guests
+                        {booking.guests} guests
                       </span>
                       <span className="inline-flex items-center text-sm text-gray-500">
-                        <CreditCard className="h-3 w-3 mr-1" />$
-                        {booking.totalPrice}
+                        <Tag className="h-3 w-3 mr-1" />
+                        {booking.roomsNeeded} rooms
                       </span>
                     </div>
                   </Col>
                   <Col xs={12} sm={4} className="text-right">
+                    <span
+                      className={`font-medium ${getStatusColor(
+                        booking.status
+                      )}`}
+                    >
+                      {booking.status}
+                    </span>
                     <Button
                       type="default"
                       size="small"
+                      className="ml-2"
                       onClick={() => {
                         setSelectedBooking(booking);
                         setIsModalOpen(true);
@@ -162,13 +172,6 @@ const Applications = () => {
                   <p>
                     <strong>Address:</strong> {selectedBooking.hotel?.address}
                   </p>
-                  <p>
-                    <strong>Contact:</strong> {selectedBooking.hotel?.contact}
-                  </p>
-                  <p>
-                    <strong>Description:</strong>{" "}
-                    {selectedBooking.hotel?.description || "N/A"}
-                  </p>
                 </div>
               </Col>
               <Col span={12}>
@@ -183,53 +186,30 @@ const Applications = () => {
                     {formatDate(selectedBooking.checkOutDate)}
                   </p>
                   <p>
-                    <strong>Guests:</strong> {selectedBooking.numberOfGuests}
+                    <strong>Guests:</strong> {selectedBooking.guests}
                   </p>
                   <p>
-                    <strong>Total Price:</strong> ${selectedBooking.totalPrice}
+                    <strong>Rooms Needed:</strong> {selectedBooking.roomsNeeded}
                   </p>
                   <p>
-                    <strong>Payment Status:</strong>{" "}
-                    <Tag
-                      color={
-                        selectedBooking.paymentStatus === "Paid"
-                          ? "green"
-                          : "orange"
-                      }
+                    <strong>Phone:</strong> {selectedBooking.phone}
+                  </p>
+                  <p>
+                    <strong>Criteria:</strong>{" "}
+                    {selectedBooking.criteria || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Status:</strong>{" "}
+                    <span
+                      className={`font-medium ${getStatusColor(
+                        selectedBooking.status
+                      )}`}
                     >
-                      {selectedBooking.paymentStatus}
-                    </Tag>
+                      {selectedBooking.status}
+                    </span>
                   </p>
                 </div>
               </Col>
-            </Row>
-
-            <Divider orientation="left">Rooms Booked</Divider>
-            <Row gutter={16}>
-              {selectedBooking.rooms?.map((room) => (
-                <Col span={12} key={room._id} className="mb-4">
-                  <Card size="small">
-                    <p className="font-medium">{room.type}</p>
-                    <p className="text-sm text-gray-600">
-                      ${room.price} per night
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Max guests: {room.maxGuests}
-                    </p>
-                    {room.description && (
-                      <p className="text-sm mt-2">{room.description}</p>
-                    )}
-                    {room.images?.[0] && (
-                      <Image
-                        src={room.images[0]}
-                        alt={room.type}
-                        width="100%"
-                        className="mt-2"
-                      />
-                    )}
-                  </Card>
-                </Col>
-              ))}
             </Row>
           </div>
         )}
@@ -238,4 +218,4 @@ const Applications = () => {
   );
 };
 
-export default Applications;
+export default AvailabilityRequests;

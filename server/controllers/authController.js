@@ -166,15 +166,16 @@ export const verifyEmail = async (req, res) => {
 };
 
 // Check if user is authenticated
-
 export const isAuthenticated = async (req, res) => {
   try {
-    return res.json({ success: true });
+    return res.json({
+      success: true,
+      user: req.user, // Return the user data attached by the auth middleware
+    });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
 };
-
 // Send Password Reset OTP
 
 export const sendResetOtp = async (req, res) => {

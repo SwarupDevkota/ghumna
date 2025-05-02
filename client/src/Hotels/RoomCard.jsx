@@ -9,10 +9,23 @@ const RoomCard = ({
   selectedCheckIn,
   selectedCheckOut,
 }) => {
-  const [selectedRooms, setSelectedRooms] = useState(1); // Default to 1 room
+  const [selectedRooms, setSelectedRooms] = useState(1);
+  const [guestCount, setGuestCount] = useState(1);
 
   const handleRoomChange = (e) => {
     setSelectedRooms(Number(e.target.value));
+  };
+
+  const handleGuestChange = (e) => {
+    const count = Math.min(Math.max(1, Number(e.target.value)), room.maxGuests);
+    setGuestCount(count);
+  };
+
+  const handleSelect = () => {
+    onSelect({
+      rooms: selectedRooms,
+      guests: guestCount,
+    });
   };
 
   return (
@@ -26,7 +39,7 @@ const RoomCard = ({
       <div className="md:flex">
         <div className="md:w-1/3 h-48 md:h-auto">
           <img
-            src={room.image}
+            src={room.images[0]} // Using first image from array
             alt={room.type}
             className="w-full h-full object-cover"
           />
@@ -36,21 +49,18 @@ const RoomCard = ({
           <div className="flex justify-between items-start">
             <div>
               <h3 className="text-xl font-bold text-gray-800 mb-2">
-                {room.type}
+                {room.type} - Room {room.roomNumber}
               </h3>
-              <div className="flex items-center text-gray-600 mb-3">
+              <div className="flex items-center text-gray-600 mb-1">
                 <Users className="h-4 w-4 mr-1" />
-                <span>Up to {room.maxGuests} guests</span>
+                <span>Max {room.maxGuests} guests</span>
               </div>
-              <div className="text-gray-600 mb-3">
-                🏨 Room Count:{" "}
-                <span className="font-medium">{room.roomCount}</span>
-              </div>
+              <p className="text-gray-600 text-sm mb-3">{room.description}</p>
             </div>
 
             <div className="text-right">
               <div className="text-2xl font-bold text-blue-600">
-                ${room.price}
+                ₹{room.price}
               </div>
               <div className="text-gray-500 text-sm">per night</div>
             </div>
@@ -59,41 +69,62 @@ const RoomCard = ({
           {/* Date Selection */}
           <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-gray-700 flex items-center font-medium">
+              <label className="text-gray-700 flex items-center font-medium text-sm">
                 <Calendar className="h-4 w-4 mr-2" /> Check-in Date
               </label>
               <input
                 type="date"
-                value={selectedCheckIn} // Uses global date state
+                value={selectedCheckIn}
                 onChange={(e) => onDateChange("checkIn", e.target.value)}
                 className="w-full border p-2 rounded-md mt-1"
+                min={new Date().toISOString().split("T")[0]}
               />
             </div>
 
             <div>
-              <label className="text-gray-700 flex items-center font-medium">
+              <label className="text-gray-700 flex items-center font-medium text-sm">
                 <Calendar className="h-4 w-4 mr-2" /> Check-out Date
               </label>
               <input
                 type="date"
-                value={selectedCheckOut} // Uses global date state
+                value={selectedCheckOut}
                 onChange={(e) => onDateChange("checkOut", e.target.value)}
                 className="w-full border p-2 rounded-md mt-1"
+                min={selectedCheckIn || new Date().toISOString().split("T")[0]}
               />
             </div>
           </div>
 
+          {/* Guest Count Input */}
+          <div className="mb-4">
+            <label className="text-gray-700 font-medium text-sm">
+              Number of Guests
+            </label>
+            <input
+              type="number"
+              min="1"
+              max={room.maxGuests}
+              value={guestCount}
+              onChange={handleGuestChange}
+              className="w-full border p-2 rounded-md mt-1"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Maximum {room.maxGuests} guests allowed
+            </p>
+          </div>
+
           {/* Number of Rooms Selection */}
           <div className="mb-4">
-            <label className="text-gray-700 font-medium">
-              Select Number of Rooms
+            <label className="text-gray-700 font-medium text-sm">
+              Number of Rooms
             </label>
             <select
               value={selectedRooms}
               onChange={handleRoomChange}
               className="w-full border p-2 rounded-md mt-1"
             >
-              {Array.from({ length: room.roomCount }, (_, i) => i + 1).map(
+              {Array.from({ length: 5 }, (_, i) => i + 1).map(
+                // Assuming max 5 rooms can be selected
                 (num) => (
                   <option key={num} value={num}>
                     {num} {num === 1 ? "Room" : "Rooms"}
@@ -104,10 +135,21 @@ const RoomCard = ({
           </div>
 
           <button
-            onClick={() => onSelect(selectedRooms)} // Pass selected number of rooms
-            className="bg-blue-600 text-white w-full py-2 rounded-md"
+            onClick={handleSelect}
+            className={`w-full py-2 rounded-md transition-colors ${
+              isSelected
+                ? "bg-green-500 text-white"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
           >
-            {isSelected ? `Selected (${selectedRooms} rooms)` : "Select Room"}
+            {isSelected ? (
+              <span className="flex items-center justify-center">
+                <Check className="h-4 w-4 mr-2" /> Selected ({selectedRooms}{" "}
+                rooms, {guestCount} guests)
+              </span>
+            ) : (
+              "Select Room"
+            )}
           </button>
         </div>
       </div>

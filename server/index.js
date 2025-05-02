@@ -10,6 +10,8 @@ import authRouter from "./routes/authRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import cookieParser from "cookie-parser";
 import roomRoutes from "./routes/roomRoutes.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
+import statsRoutes from "./routes/statsRoutes.js";
 
 dotenv.config();
 
@@ -43,7 +45,9 @@ app.use("/api/user", userRouter);
 app.use("/api/contact", contactRoutes);
 app.use("/api/event", eventRoutes);
 app.use("/api/hotels", hotelRoutes); // Use hotel routes
-app.use("/api", roomRoutes);
+app.use("/api/rooms", roomRoutes);
+app.use("/api/booking", bookingRoutes);
+app.use("/api/stats", statsRoutes);
 
 // 404 Handler for Unknown Routes
 app.use((req, res, next) => {

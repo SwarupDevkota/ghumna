@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Star, MapPin, Search, X, ChevronDown } from "lucide-react";
-import ToastComponent, { showToast } from "./ui/ToastComponent";
 import AnimateOnScroll from "./ui/AnimateOnScroll";
+import { message } from "antd";
 
 const API_URL = "http://localhost:3000/api/hotels/approved-hotels";
 
@@ -38,9 +38,9 @@ const BookingsPage = () => {
       const data = await response.json();
       setHotels(data.data || []);
       setFilteredHotels(data.data || []);
-      showToast.success("Hotels loaded successfully!");
+      message.success("Hotels loaded successfully!");
     } catch (error) {
-      showToast.error("Error fetching hotels. Please try again later.");
+      message.error("Error fetching hotels. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -61,9 +61,9 @@ const BookingsPage = () => {
     setFilteredHotels(filtered);
 
     if (filtered.length === 0) {
-      showToast.info("No hotels match your filters.");
+      message.info("No hotels match your filters.");
     } else {
-      showToast.success(
+      message.success(
         `Found ${filtered.length} hotels matching your criteria.`
       );
     }
@@ -72,7 +72,7 @@ const BookingsPage = () => {
   const resetFilters = () => {
     setFilters({ location: "" });
     setFilteredHotels(hotels);
-    showToast.info("Filters have been reset.");
+    message.info("Filters have been reset.");
   };
 
   const viewHotelData = (hotelId) => {
