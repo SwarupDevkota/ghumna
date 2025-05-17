@@ -5,6 +5,7 @@ import Button from "./ui/button";
 import ToastComponent from "./ui/ToastComponent";
 import { toast } from "react-toastify";
 import { AppContent } from "./context/AppContext";
+import OAuth from "./OAuth";
 
 const Login = () => {
   const [isPasswordShown, setIsPasswordShown] = useState(false);
@@ -103,11 +104,7 @@ const Login = () => {
             />
           </form>
 
-          <Button
-            text="Login with google"
-            // onClick={}
-            variant="secondary"
-          />
+          <OAuth />
 
           <p className="text-center text-base font-medium mt-7 mb-1">
             Don&apos;t have an account?{" "}

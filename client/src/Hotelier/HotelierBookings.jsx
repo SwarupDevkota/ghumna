@@ -6,11 +6,11 @@ import {
   Card,
   Descriptions,
   Button,
-  Space,
   Typography,
   message,
   Spin,
   Layout,
+  Divider,
 } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import { AppContent } from "../context/AppContext";
@@ -35,7 +35,11 @@ const HotelierBookings = () => {
           const response = await axios.get(
             `http://localhost:3000/api/booking/hotel/${userData.ownedHotel}`
           );
-          setBookings(response.data);
+          const processedBookings = response.data.map((booking) => ({
+            ...booking,
+            paymentStatus: "Paid",
+          }));
+          setBookings(processedBookings);
         }
       } catch (error) {
         message.error("Failed to fetch bookings");
@@ -52,6 +56,12 @@ const HotelierBookings = () => {
     setSelectedBooking(booking);
     setIsModalVisible(true);
   };
+
+  // Calculate total revenue
+  const totalRevenue = bookings.reduce(
+    (sum, booking) => sum + booking.totalPrice,
+    0
+  );
 
   const columns = [
     {
@@ -93,25 +103,13 @@ const HotelierBookings = () => {
       title: "Total Price",
       dataIndex: "totalPrice",
       key: "totalPrice",
-      render: (price) => `$${price}`,
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (
-        <Tag color={status === "Confirmed" ? "green" : "orange"}>{status}</Tag>
-      ),
+      render: (price) => `Rs. ${price.toLocaleString()}`,
     },
     {
       title: "Payment",
       dataIndex: "paymentStatus",
       key: "paymentStatus",
-      render: (paymentStatus) => (
-        <Tag color={paymentStatus === "Paid" ? "green" : "red"}>
-          {paymentStatus}
-        </Tag>
-      ),
+      render: () => <Tag color="green">Paid</Tag>,
     },
     {
       title: "Actions",
@@ -122,6 +120,34 @@ const HotelierBookings = () => {
           onClick={() => showBookingDetails(record)}
         />
       ),
+    },
+  ];
+
+  const ledgerColumns = [
+    {
+      title: "Guest Name",
+      dataIndex: "user",
+      key: "user",
+      render: (user) => user?.name || "N/A",
+    },
+    {
+      title: "Room Type",
+      dataIndex: "rooms",
+      key: "rooms",
+      render: (rooms) => rooms?.map((room) => room.type).join(", ") || "N/A",
+    },
+    {
+      title: "Amount (Rs.)",
+      dataIndex: "totalPrice",
+      key: "totalPrice",
+      render: (price) => price.toLocaleString(),
+      align: "right",
+    },
+    {
+      title: "Date",
+      dataIndex: "createdAt",
+      key: "date",
+      render: (date) => new Date(date).toLocaleDateString(),
     },
   ];
 
@@ -141,10 +167,7 @@ const HotelierBookings = () => {
       >
         <Header style={{ padding: 0, background: "#fff" }} />
         <Content style={{ margin: "24px 16px 0", overflow: "initial" }}>
-          <div
-            className="hotelier-bookings"
-            style={{ padding: 24, background: "#fff" }}
-          >
+          <div style={{ padding: 24, background: "#fff" }}>
             <Title level={2}>Hotel Bookings Management</Title>
             <Card>
               {loading ? (
@@ -159,6 +182,9 @@ const HotelierBookings = () => {
               )}
             </Card>
 
+            <Divider />
+
+         
             <Modal
               title="Booking Details"
               visible={isModalVisible}
@@ -188,7 +214,7 @@ const HotelierBookings = () => {
                           <strong>Type:</strong> {room.type}
                         </p>
                         <p>
-                          <strong>Price:</strong> ${room.price}
+                          <strong>Price:</strong> Rs. {room.price}
                         </p>
                         <p>
                           <strong>Max Guests:</strong> {room.maxGuests}
@@ -211,29 +237,10 @@ const HotelierBookings = () => {
                     {selectedBooking.numberOfGuests}
                   </Descriptions.Item>
                   <Descriptions.Item label="Total Price">
-                    ${selectedBooking.totalPrice}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Status">
-                    <Tag
-                      color={
-                        selectedBooking.status === "Confirmed"
-                          ? "green"
-                          : "orange"
-                      }
-                    >
-                      {selectedBooking.status}
-                    </Tag>
+                    Rs. {selectedBooking.totalPrice.toLocaleString()}
                   </Descriptions.Item>
                   <Descriptions.Item label="Payment Status">
-                    <Tag
-                      color={
-                        selectedBooking.paymentStatus === "Paid"
-                          ? "green"
-                          : "red"
-                      }
-                    >
-                      {selectedBooking.paymentStatus}
-                    </Tag>
+                    <Tag color="green">Paid</Tag>
                   </Descriptions.Item>
                   <Descriptions.Item label="Special Requests">
                     {selectedBooking.specialRequests || "None"}

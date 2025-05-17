@@ -1,135 +1,93 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { CreditCard, CheckCircle } from "lucide-react";
-import BookingSummary from "./BookingSummary";
+import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
+// import BookingSummary from "./BookingSummary"; // Uncomment if needed
 
 const PaymentPage = () => {
+  const { state } = useLocation();
   const navigate = useNavigate();
+  const booking = state?.bookingData;
 
-  // Static booking details
-  const bookingDetails = {
-    hotel: "Grand Hotel",
-    room: "Deluxe Suite",
-    checkIn: "2025-03-15",
-    checkOut: "2025-03-20",
-    price: 250,
-  };
-
-  const [paymentMethod, setPaymentMethod] = useState("credit");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardHolder, setCardHolder] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const handlePaymentSubmit = (e) => {
-    e.preventDefault();
-
-    if (!cardNumber || !cardHolder || !expiryDate || !cvv) {
-      alert("Please fill in all payment details");
+  const handleKhaltiPayment = async () => {
+    if (!booking) {
+      alert("No booking data found.");
       return;
     }
 
-    setIsProcessing(true);
+    const payload = {
+      return_url: "http://localhost:5173/confirmation", // Will receive pidx here
+      website_url: "http://localhost:5173",
+      amount: booking.totalPrice * 100, // Convert to paisa
+      purchase_order_id: booking.bookingId,
+      purchase_order_name: booking.roomType,
+      customer_info: {
+        name: booking.hotelName,
+        email: "guest@example.com", // Replace with dynamic email if available
+        phone: "9800000001", // Replace with actual phone in prod
+      },
+    };
 
-    setTimeout(() => {
-      setIsProcessing(false);
-      navigate("/confirmation");
-    }, 1500);
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/payment/pay",
+        payload
+      );
+      const { payment_url } = response.data;
+
+      if (payment_url) {
+        window.location.href = payment_url;
+      } else {
+        throw new Error("No payment_url returned from backend.");
+      }
+    } catch (error) {
+      console.error(
+        "❌ Khalti initiation failed:",
+        error.response?.data || error.message
+      );
+      alert("Failed to initiate Khalti payment.");
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="bg-blue-600 py-8 text-center">
-        <h1 className="text-3xl font-bold text-white">Payment Details</h1>
-        <p className="text-blue-100 mt-2">
-          Complete your booking by providing payment information
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-100 py-10 px-4">
+      <div className="max-w-2xl mx-auto bg-white p-6 rounded shadow-md">
+        <h1 className="text-2xl font-bold mb-4 text-center">
+          Complete Your Booking
+        </h1>
 
-      <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
-        <div className="md:w-2/3 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">
-            Payment Method
-          </h2>
-
-          <div className="flex space-x-4 mb-6">
-            {["credit", "debit", "paypal"].map((method) => (
-              <button
-                key={method}
-                type="button"
-                className={`flex-1 py-3 px-4 rounded-md border transition duration-300 flex items-center justify-center ${
-                  paymentMethod === method
-                    ? "border-blue-600 bg-blue-50 text-blue-600"
-                    : "border-gray-300 text-gray-600 hover:border-blue-300"
-                }`}
-                onClick={() => setPaymentMethod(method)}
-              >
-                <CreditCard className="h-5 w-5 mr-2" />
-                {method.charAt(0).toUpperCase() + method.slice(1)} Card
-              </button>
-            ))}
-          </div>
-
-          <form onSubmit={handlePaymentSubmit} className="space-y-4">
-            <input
-              type="text"
-              placeholder="Card Number"
-              className="w-full border p-2 rounded"
-              value={cardNumber}
-              onChange={(e) => setCardNumber(e.target.value)}
-              maxLength={19}
-            />
-            <input
-              type="text"
-              placeholder="Card Holder Name"
-              className="w-full border p-2 rounded"
-              value={cardHolder}
-              onChange={(e) => setCardHolder(e.target.value)}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="MM/YY"
-                className="w-full border p-2 rounded"
-                value={expiryDate}
-                onChange={(e) => setExpiryDate(e.target.value)}
-                maxLength={5}
-              />
-              <input
-                type="text"
-                placeholder="CVV"
-                className="w-full border p-2 rounded"
-                value={cvv}
-                onChange={(e) => setCvv(e.target.value)}
-                maxLength={3}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isProcessing}
-              className="w-full py-3 rounded bg-blue-600 text-white hover:bg-blue-700"
-            >
-              {isProcessing ? "Processing..." : "Complete Booking"}
-            </button>
-          </form>
+        <div className="space-y-2">
+          <p>
+            <strong>Hotel:</strong> {booking?.hotelName}
+          </p>
+          <p>
+            <strong>Room:</strong> {booking?.roomType}
+          </p>
+          <p>
+            <strong>Check-In:</strong> {booking?.checkInDate}
+          </p>
+          <p>
+            <strong>Check-Out:</strong> {booking?.checkOutDate}
+          </p>
+          <p>
+            <strong>Guests:</strong> {booking?.numberOfGuests}
+          </p>
+          <p>
+            <strong>Total Price:</strong> Rs. {booking?.totalPrice}
+          </p>
         </div>
 
-        <div className="md:w-1/3">
-          <BookingSummary bookingDetails={bookingDetails} />
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-6">
-            <CheckCircle className="h-5 w-5 text-green-500 mr-2 inline" />
-            <span className="text-gray-800 font-semibold">
-              Free Cancellation
-            </span>
-            <p className="text-sm text-gray-600">
-              Cancel before{" "}
-              {new Date(bookingDetails.checkIn).toLocaleDateString()} for a full
-              refund.
-            </p>
-          </div>
-        </div>
+        <button
+          onClick={handleKhaltiPayment}
+          className="mt-6 w-full bg-purple-600 text-white font-semibold py-3 px-6 rounded hover:bg-purple-700 transition"
+        >
+          Pay with Khalti
+        </button>
       </div>
+
+      {/* Uncomment this section if you want to show a visual booking summary */}
+      {/* <div className="max-w-2xl mx-auto mt-4">
+        {booking && <BookingSummary bookingDetails={booking} />}
+      </div> */}
     </div>
   );
 };

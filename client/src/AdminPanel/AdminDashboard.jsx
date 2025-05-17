@@ -7,9 +7,8 @@ import {
   Mail,
   Calendar,
   AlertCircle,
-  CheckCircle,
-  Clock,
   Activity,
+  Clock,
 } from "lucide-react";
 import { Bar, Line } from "react-chartjs-2";
 import {
@@ -23,6 +22,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import Sidebar from "./Sidebar";
 
 // Register ChartJS components
 ChartJS.register(
@@ -40,6 +40,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -152,161 +153,197 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="p-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">
-          Admin Dashboard
-        </h1>
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
+      <Sidebar
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+      />
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            icon={<Users className="h-6 w-6" />}
-            title="Users"
-            value={stats.counts.users}
-            change={0}
-            color="blue"
-          />
-          <StatCard
-            icon={<Hotel className="h-6 w-6" />}
-            title="Hotels"
-            value={stats.counts.hotels}
-            change={0}
-            color="purple"
-          />
-          <StatCard
-            icon={<Bed className="h-6 w-6" />}
-            title="Rooms"
-            value={stats.counts.rooms}
-            change={0}
-            color="green"
-          />
-          <StatCard
-            icon={<CalendarCheck className="h-6 w-6" />}
-            title="Bookings"
-            value={stats.counts.bookings}
-            change={0}
-            color="indigo"
-          />
-        </div>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Scrollable Content */}
+        <main
+          className="flex-1 overflow-y-auto p-6 transition-all duration-300"
+          style={{
+            marginLeft: isSidebarOpen ? "5rem" : "1rem",
+            paddingBottom: "6rem", // Extra space for footer
+          }}
+        >
+          <h1 className="text-3xl font-bold text-gray-800 mb-6">
+            Admin Dashboard
+          </h1>
 
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Activity className="h-5 w-5 mr-2 text-blue-500" />
-              Bookings & Revenue
-            </h2>
-            <div className="h-80">
-              <Bar
-                data={bookingsChartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      title: { display: true, text: "Number of Bookings" },
-                    },
-                    y1: {
-                      beginAtZero: true,
-                      position: "right",
-                      title: { display: true, text: "Revenue (NPR)" },
-                      grid: { drawOnChartArea: false },
-                    },
-                  },
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Activity className="h-5 w-5 mr-2 text-amber-500" />
-              User & Hotel Growth
-            </h2>
-            <div className="h-80">
-              <Line
-                data={growthChartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: { beginAtZero: true },
-                  },
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Pending Approvals */}
-        <div className="bg-white p-6 rounded-lg shadow mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <AlertCircle className="h-5 w-5 mr-2 text-yellow-500" />
-            Pending Approvals
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <ApprovalCard
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatCard
+              icon={<Users className="h-6 w-6" />}
+              title="Users"
+              value={stats.counts.users}
+              change={0}
+              color="blue"
+            />
+            <StatCard
+              icon={<Hotel className="h-6 w-6" />}
               title="Hotels"
-              count={stats.pendingApprovals.hotels}
-              icon={<Hotel className="h-5 w-5" />}
+              value={stats.counts.hotels}
+              change={0}
+              color="purple"
             />
-            <ApprovalCard
-              title="Events"
-              count={stats.pendingApprovals.events}
-              icon={<Calendar className="h-5 w-5" />}
+            <StatCard
+              icon={<Bed className="h-6 w-6" />}
+              title="Rooms"
+              value={stats.counts.rooms}
+              change={0}
+              color="green"
             />
-            <ApprovalCard
-              title="Availability Requests"
-              count={stats.pendingApprovals.availabilityRequests}
-              icon={<Clock className="h-5 w-5" />}
+            <StatCard
+              icon={<CalendarCheck className="h-6 w-6" />}
+              title="Bookings"
+              value={stats.counts.bookings}
+              change={0}
+              color="indigo"
             />
           </div>
-        </div>
 
-        {/* Recent Activities */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <RecentActivities
-            title="Recent Bookings"
-            icon={<CalendarCheck className="h-5 w-5" />}
-            items={stats.recentActivities.bookings
-              .slice(0, 5)
-              .map((booking) => ({
-                id: booking._id,
-                title: `${booking.hotel.name} Booking`,
-                description: `${booking.numberOfGuests} guests • NPR ${booking.totalPrice}`,
-                date: new Date(booking.createdAt).toLocaleDateString(),
-                status: booking.status,
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <Activity className="h-5 w-5 mr-2 text-blue-500" />
+                Bookings & Revenue
+              </h2>
+              <div className="h-80">
+                <Bar
+                  data={bookingsChartData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        title: { display: true, text: "Number of Bookings" },
+                      },
+                      y1: {
+                        beginAtZero: true,
+                        position: "right",
+                        title: { display: true, text: "Revenue (NPR)" },
+                        grid: { drawOnChartArea: false },
+                      },
+                    },
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <Activity className="h-5 w-5 mr-2 text-amber-500" />
+                User & Hotel Growth
+              </h2>
+              <div className="h-80">
+                <Line
+                  data={growthChartData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: { beginAtZero: true },
+                    },
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Pending Approvals */}
+          <div className="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 className="text-xl font-semibold mb-4 flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2 text-yellow-500" />
+              Pending Approvals
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <ApprovalCard
+                title="Hotels"
+                count={stats.pendingApprovals.hotels}
+                icon={<Hotel className="h-5 w-5" />}
+              />
+              <ApprovalCard
+                title="Events"
+                count={stats.pendingApprovals.events}
+                icon={<Calendar className="h-5 w-5" />}
+              />
+              <ApprovalCard
+                title="Availability Requests"
+                count={stats.pendingApprovals.availabilityRequests}
+                icon={<Clock className="h-5 w-5" />}
+              />
+            </div>
+          </div>
+
+          {/* Recent Activities */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <RecentActivities
+              title="Recent Bookings"
+              icon={<CalendarCheck className="h-5 w-5" />}
+              items={stats.recentActivities.bookings
+                .slice(0, 5)
+                .map((booking) => ({
+                  id: booking._id,
+                  title: `${booking.hotel.name} Booking`,
+                  description: `${booking.numberOfGuests} guests • NPR ${booking.totalPrice}`,
+                  date: new Date(booking.createdAt).toLocaleDateString(),
+                  status: booking.status,
+                }))}
+            />
+
+            <RecentActivities
+              title="Recent Contacts"
+              icon={<Mail className="h-5 w-5" />}
+              items={stats.recentActivities.contacts
+                .slice(0, 5)
+                .map((contact) => ({
+                  id: contact._id,
+                  title: contact.name,
+                  description: contact.message,
+                  date: contact.createdAt,
+                  email: contact.email,
+                }))}
+            />
+
+            <RecentActivities
+              title="Recent Users"
+              icon={<Users className="h-5 w-5" />}
+              items={stats.recentActivities.users.slice(0, 5).map((user) => ({
+                id: user._id,
+                title: user.name,
+                description: user.role,
+                date: new Date(user.createdAt).toLocaleDateString(),
+                email: user.email,
               }))}
-          />
+            />
+          </div>
+        </main>
 
-          <RecentActivities
-            title="Recent Contacts"
-            icon={<Mail className="h-5 w-5" />}
-            items={stats.recentActivities.contacts
-              .slice(0, 5)
-              .map((contact) => ({
-                id: contact._id,
-                title: contact.name,
-                description: contact.message,
-                date: contact.createdAt,
-                email: contact.email,
-              }))}
-          />
-
-          <RecentActivities
-            title="Recent Users"
-            icon={<Users className="h-5 w-5" />}
-            items={stats.recentActivities.users.slice(0, 5).map((user) => ({
-              id: user._id,
-              title: user.name,
-              description: user.role,
-              date: new Date(user.createdAt).toLocaleDateString(),
-              email: user.email,
-            }))}
-          />
-        </div>
+        {/* Footer */}
+        <footer className="bg-white border-t border-gray-200 py-4 px-6">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              © {new Date().getFullYear()} Hotel Management System
+            </p>
+            <div className="flex space-x-4">
+              <a href="#" className="text-sm text-gray-600 hover:text-gray-900">
+                Privacy Policy
+              </a>
+              <a href="#" className="text-sm text-gray-600 hover:text-gray-900">
+                Terms of Service
+              </a>
+              <a href="#" className="text-sm text-gray-600 hover:text-gray-900">
+                Contact
+              </a>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

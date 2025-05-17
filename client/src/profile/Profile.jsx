@@ -5,6 +5,7 @@ import ProfileInfo from "./ProfileInfo";
 import Applications from "./Applications";
 import Settings from "./Settings";
 import AvailabilityRequests from "./AvailabilityRequests";
+import EventRegistrationPage from "../EventRegistrationPage";
 
 const Profile = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -23,7 +24,7 @@ const Profile = () => {
             {activeTab === "profile" && <ProfileInfo />}
             {activeTab === "applications" && <Applications />}
             {activeTab === "availability-requests" && <AvailabilityRequests />}
-
+            {activeTab === "event-registration" && <EventRegistrationPage />}
             {activeTab === "settings" && <Settings />}
           </div>
         </div>

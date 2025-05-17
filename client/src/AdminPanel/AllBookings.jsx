@@ -1,305 +1,429 @@
 import React, { useState, useEffect } from "react";
-import {
-  Table,
-  Tag,
-  Modal,
-  Card,
-  Descriptions,
-  Button,
-  Typography,
-  message,
-  Spin,
-  Layout,
-  Breadcrumb,
-  Divider,
-} from "antd";
-import {
-  EyeOutlined,
-  MenuUnfoldOutlined,
-  MenuFoldOutlined,
-} from "@ant-design/icons";
-import { Hotel } from "lucide-react";
+import { Loader2, X, Eye, Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Sidebar from "./Sidebar";
 import axios from "axios";
-import Sidebar from "./Sidebar"; // Import your Sidebar component
 
-const { Title, Text } = Typography;
-const { Header, Content } = Layout;
+const API_BASE_URL = "http://localhost:3000";
 
 const AllBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3000/api/booking/all-bookings`
+          `${API_BASE_URL}/api/booking/all-bookings`,
+          {
+            params: {
+              page: currentPage,
+              limit: itemsPerPage,
+            },
+          }
         );
         setBookings(response.data.allBookings || []);
+        setTotalItems(response.data.totalCount || 0);
       } catch (error) {
-        message.error("Failed to fetch bookings");
         console.error("Error fetching bookings:", error);
+        toast.error("Failed to fetch bookings");
       } finally {
         setLoading(false);
       }
     };
 
     fetchBookings();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const showBookingDetails = (booking) => {
     setSelectedBooking(booking);
-    setIsModalVisible(true);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedBooking(null);
   };
 
   const getPaymentColor = (status) => {
     switch (status) {
       case "Paid":
-        return "green";
+        return "bg-green-200 text-green-800";
       case "Pending":
-        return "orange";
+        return "bg-yellow-200 text-yellow-800";
       case "Failed":
-        return "red";
+        return "bg-red-200 text-red-800";
       default:
-        return "blue";
+        return "bg-blue-200 text-blue-800";
     }
   };
 
-  const columns = [
-    {
-      title: "Booking ID",
-      dataIndex: "_id",
-      key: "_id",
-      render: (id) => <Text copyable>{id.substring(0, 8)}...</Text>,
-      width: 120,
-    },
-    {
-      title: "Guest",
-      dataIndex: "user",
-      key: "user",
-      render: (user) => user?.name || "N/A",
-      width: 150,
-    },
-    {
-      title: "Room Type",
-      dataIndex: "rooms",
-      key: "rooms",
-      render: (rooms) =>
-        rooms?.map((room, index) => (
-          <Tag key={index} color="blue">
-            {room.type}
-          </Tag>
-        )) || "N/A",
-      width: 150,
-    },
-    {
-      title: "Dates",
-      key: "dates",
-      render: (record) => (
-        <div>
-          <div>
-            <Text strong>Check-In:</Text>{" "}
-            {record.checkInDate
-              ? new Date(record.checkInDate).toLocaleDateString()
-              : "N/A"}
-          </div>
-          <div>
-            <Text strong>Check-Out:</Text>{" "}
-            {record.checkOutDate
-              ? new Date(record.checkOutDate).toLocaleDateString()
-              : "N/A"}
-          </div>
-        </div>
-      ),
-      width: 180,
-    },
-    {
-      title: "Guests",
-      dataIndex: "numberOfGuests",
-      key: "numberOfGuests",
-      width: 100,
-      align: "center",
-    },
-    {
-      title: "Total Price",
-      dataIndex: "totalPrice",
-      key: "totalPrice",
-      render: (price) => (
-        <Text strong style={{ color: "#1890ff" }}>
-          ${price.toLocaleString()}
-        </Text>
-      ),
-      width: 120,
-      align: "right",
-    },
-    {
-      title: "Payment",
-      dataIndex: "paymentStatus",
-      key: "paymentStatus",
-      render: (paymentStatus) => (
-        <Tag color={getPaymentColor(paymentStatus)}>{paymentStatus}</Tag>
-      ),
-      width: 120,
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Button
-          icon={<EyeOutlined />}
-          onClick={() => showBookingDetails(record)}
-        />
-      ),
-      width: 80,
-      align: "center",
-    },
-  ];
+  // Calculate total pages
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  // Generate page numbers
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const half = Math.floor(maxVisiblePages / 2);
+      let start = currentPage - half;
+      let end = currentPage + half;
+
+      if (start < 1) {
+        start = 1;
+        end = maxVisiblePages;
+      }
+
+      if (end > totalPages) {
+        end = totalPages;
+        start = totalPages - maxVisiblePages + 1;
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+
+    return pages;
+  };
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
-      {/* Use your Sidebar component */}
+    <div className="flex h-screen bg-gray-50">
+      <ToastContainer position="top-right" autoClose={3000} />
+
+      {/* Sidebar */}
       <Sidebar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
       />
 
-      <Layout
-        className="site-layout"
-        style={{ marginLeft: isSidebarOpen ? 250 : 80 }}
-      >
-        <Header
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Scrollable Content */}
+        <main
+          className="flex-1 overflow-y-auto p-6 transition-all duration-300"
           style={{
-            padding: 0,
-            background: "#fff",
-            boxShadow: "0 1px 4px rgba(0,21,41,0.08)",
+            marginLeft: isSidebarOpen ? "5rem" : "1rem",
+            paddingBottom: "6rem", // Extra space for footer
           }}
         >
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <Button
-              type="text"
-              icon={
-                isSidebarOpen ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />
-              }
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-blue-700">All Bookings</h1>
+            <button
+              className="text-gray-600 hover:text-gray-800"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              style={{ fontSize: "16px", width: 64, height: 64 }}
-            />
-            <Breadcrumb style={{ marginLeft: 16 }}>
-              <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-              <Breadcrumb.Item>Bookings</Breadcrumb.Item>
-            </Breadcrumb>
-          </div>
-        </Header>
-        <Content style={{ margin: "16px 16px 0" }}>
-          <div
-            className="site-layout-background"
-            style={{ padding: 24, minHeight: 360 }}
-          >
-            <Title level={3} style={{ marginBottom: 24 }}>
-              All Bookings
-            </Title>
-            <Card bordered={false}>
-              {loading ? (
-                <div style={{ textAlign: "center", padding: "50px" }}>
-                  <Spin size="large" />
-                </div>
-              ) : (
-                <Table
-                  columns={columns}
-                  dataSource={bookings}
-                  rowKey="_id"
-                  scroll={{ x: true }}
-                  bordered
-                  size="middle"
-                />
-              )}
-            </Card>
-
-            <Modal
-              title="Booking Details"
-              visible={isModalVisible}
-              onCancel={() => setIsModalVisible(false)}
-              footer={[
-                <Button key="back" onClick={() => setIsModalVisible(false)}>
-                  Close
-                </Button>,
-              ]}
-              width={800}
             >
-              {selectedBooking && (
-                <Descriptions bordered column={1}>
-                  <Descriptions.Item label="Booking ID">
-                    {selectedBooking._id}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Guest Name">
-                    {selectedBooking.user?.name}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Guest Email">
-                    {selectedBooking.user?.email}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Room Details">
+              <Menu size={24} />
+            </button>
+          </div>
+
+          {/* Show loading, error, or data */}
+          {loading ? (
+            <div className="flex items-center space-x-2 text-blue-600">
+              <Loader2 className="animate-spin" size={24} />
+              <span>Loading bookings...</span>
+            </div>
+          ) : bookings.length === 0 ? (
+            <p className="text-gray-600">No bookings found.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 border border-gray-300 shadow-md">
+                <thead className="bg-blue-600 text-white">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Booking ID
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Guest
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Room Type
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Dates
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Guests
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Total Price
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Payment
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {bookings.map((booking) => (
+                    <tr key={booking._id} className="hover:bg-gray-50">
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {booking._id.substring(0, 8)}...
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {booking.user?.name || "N/A"}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        {booking.rooms?.map((room, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-1 bg-blue-200 text-blue-800 rounded mr-1 text-xs"
+                          >
+                            {room.type}
+                          </span>
+                        )) || "N/A"}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div>
+                          <span className="font-medium">Check-In: </span>
+                          {booking.checkInDate
+                            ? new Date(booking.checkInDate).toLocaleDateString()
+                            : "N/A"}
+                        </div>
+                        <div>
+                          <span className="font-medium">Check-Out: </span>
+                          {booking.checkOutDate
+                            ? new Date(
+                                booking.checkOutDate
+                              ).toLocaleDateString()
+                            : "N/A"}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
+                        {booking.numberOfGuests}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-bold text-blue-600">
+                        Rs. {booking.totalPrice.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-1 rounded text-xs ${getPaymentColor(
+                            booking.paymentStatus
+                          )}`}
+                        >
+                          {booking.paymentStatus}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <button
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs flex items-center"
+                          onClick={() => showBookingDetails(booking)}
+                        >
+                          <Eye size={14} className="mr-1" />
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">
+                        Showing{" "}
+                        <span className="font-medium">
+                          {(currentPage - 1) * itemsPerPage + 1}
+                        </span>{" "}
+                        to{" "}
+                        <span className="font-medium">
+                          {Math.min(currentPage * itemsPerPage, totalItems)}
+                        </span>{" "}
+                        of <span className="font-medium">{totalItems}</span>{" "}
+                        results
+                      </p>
+                    </div>
+                    <div>
+                      <nav
+                        className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                        aria-label="Pagination"
+                      >
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) => Math.max(prev - 1, 1))
+                          }
+                          disabled={currentPage === 1}
+                          className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <span className="sr-only">Previous</span>
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+
+                        {getPageNumbers().map((number) => (
+                          <button
+                            key={number}
+                            onClick={() => setCurrentPage(number)}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              currentPage === number
+                                ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                                : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                            }`}
+                          >
+                            {number}
+                          </button>
+                        ))}
+
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) =>
+                              Math.min(prev + 1, totalPages)
+                            )
+                          }
+                          disabled={currentPage === totalPages}
+                          className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <span className="sr-only">Next</span>
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Modal for Booking Details */}
+          {isModalOpen && selectedBooking && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+              <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative overflow-y-auto max-h-[90vh]">
+                <button
+                  className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                  onClick={closeModal}
+                >
+                  <X size={24} />
+                </button>
+
+                <h2 className="text-xl font-bold text-blue-700 mb-4">
+                  Booking Details
+                </h2>
+                <div className="space-y-3">
+                  <p>
+                    <strong>Booking ID:</strong> {selectedBooking._id}
+                  </p>
+                  <p>
+                    <strong>Guest Name:</strong>{" "}
+                    {selectedBooking.user?.name || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Guest Email:</strong>{" "}
+                    {selectedBooking.user?.email || "N/A"}
+                  </p>
+                  <div>
+                    <strong>Room Details:</strong>
                     {selectedBooking.rooms?.map((room, index) => (
                       <div
                         key={index}
-                        style={{
-                          marginBottom:
-                            index < selectedBooking.rooms.length - 1 ? 16 : 0,
-                        }}
+                        className="mt-2 pl-4 border-l-2 border-blue-200"
                       >
-                        <Divider orientation="left" orientationMargin="0">
-                          Room {index + 1}
-                        </Divider>
+                        <h4 className="font-medium">Room {index + 1}</h4>
                         <p>
-                          <Text strong>Type:</Text> {room.type}
+                          <strong>Type:</strong> {room.type}
                         </p>
                         <p>
-                          <Text strong>Price:</Text> ${room.price}
+                          <strong>Price:</strong> Rs. {room.price}
                         </p>
                         <p>
-                          <Text strong>Max Guests:</Text> {room.maxGuests}
+                          <strong>Max Guests:</strong> {room.maxGuests}
                         </p>
                         <p>
-                          <Text strong>Description:</Text> {room.description}
+                          <strong>Description:</strong> {room.description}
                         </p>
                       </div>
                     ))}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Check-In Date">
+                  </div>
+                  <p>
+                    <strong>Check-In Date:</strong>{" "}
                     {new Date(selectedBooking.checkInDate).toLocaleDateString()}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Check-Out Date">
+                  </p>
+                  <p>
+                    <strong>Check-Out Date:</strong>{" "}
                     {new Date(
                       selectedBooking.checkOutDate
                     ).toLocaleDateString()}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Number of Guests">
+                  </p>
+                  <p>
+                    <strong>Number of Guests:</strong>{" "}
                     {selectedBooking.numberOfGuests}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Total Price">
-                    <Text strong>
-                      ${selectedBooking.totalPrice.toLocaleString()}
-                    </Text>
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Payment Status">
-                    <Tag color={getPaymentColor(selectedBooking.paymentStatus)}>
+                  </p>
+                  <p>
+                    <strong>Total Price:</strong>{" "}
+                    <span className="font-bold text-blue-600">
+                      Rs. {selectedBooking.totalPrice.toLocaleString()}
+                    </span>
+                  </p>
+                  <p>
+                    <strong>Payment Status:</strong>{" "}
+                    <span
+                      className={`px-2 py-1 rounded ${getPaymentColor(
+                        selectedBooking.paymentStatus
+                      )}`}
+                    >
                       {selectedBooking.paymentStatus}
-                    </Tag>
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Special Requests">
+                    </span>
+                  </p>
+                  <p>
+                    <strong>Special Requests:</strong>{" "}
                     {selectedBooking.specialRequests || "None"}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Booking Date">
+                  </p>
+                  <p>
+                    <strong>Booking Date:</strong>{" "}
                     {new Date(selectedBooking.createdAt).toLocaleString()}
-                  </Descriptions.Item>
-                </Descriptions>
-              )}
-            </Modal>
+                  </p>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                    onClick={closeModal}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* Footer */}
+        <footer className="bg-white border-t border-gray-200 py-4 px-6">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              © {new Date().getFullYear()} Hotel Management System
+            </p>
+            <div className="flex space-x-4">
+              <a href="#" className="text-sm text-gray-600 hover:text-gray-900">
+                Privacy Policy
+              </a>
+              <a href="#" className="text-sm text-gray-600 hover:text-gray-900">
+                Terms of Service
+              </a>
+              <a href="#" className="text-sm text-gray-600 hover:text-gray-900">
+                Contact
+              </a>
+            </div>
           </div>
-        </Content>
-      </Layout>
-    </Layout>
+        </footer>
+      </div>
+    </div>
   );
 };
 

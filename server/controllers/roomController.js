@@ -183,7 +183,7 @@ export const createAvailabilityRequest = async (req, res) => {
       checkInDate,
       checkOutDate,
       criteria,
-      status: "Pending",
+      status: "Completed",
     });
 
     // Save to database
@@ -263,7 +263,7 @@ export const approveAvailabilityRequest = async (req, res) => {
     }
 
     // Check if the request is already processed
-    if (availabilityRequest.status !== "Pending") {
+    if (availabilityRequest.status !== "Completed") {
       return res.status(400).json({
         success: false,
         message: "This request has already been processed",
@@ -347,7 +347,7 @@ export const rejectAvailabilityRequest = async (req, res) => {
     }
 
     // Check if the request is already processed
-    if (availabilityRequest.status !== "Pending") {
+    if (availabilityRequest.status !== "Compeleted") {
       return res.status(400).json({
         success: false,
         message: "This request has already been processed",

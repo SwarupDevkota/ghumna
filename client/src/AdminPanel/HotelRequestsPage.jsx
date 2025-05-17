@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "./Sidebar";
-import { Printer, Download, Filter, Calendar } from "lucide-react";
+import {
+  Printer,
+  Download,
+  Filter,
+  Calendar,
+  RotateCw,
+  FlipHorizontal,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import * as XLSX from "xlsx";
@@ -9,6 +19,7 @@ import FeedbackModal from "../ui/FeedbackModal";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import HotelierDetailsModal from "./HotelierDetailsModal";
+import { motion, AnimatePresence } from "framer-motion";
 
 const API_URL = "http://localhost:3000/api/hotels";
 
@@ -26,6 +37,8 @@ const HotelRequestsPage = () => {
   const [endDate, setEndDate] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filteredRequests, setFilteredRequests] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     fetchHotelRequests();
@@ -212,6 +225,63 @@ const HotelRequestsPage = () => {
     XLSX.writeFile(workbook, "HotelRequests.xlsx");
   };
 
+  const openImageModal = (image, index) => {
+    setSelectedImage({ src: image, rotate: 0, flip: null });
+    setCurrentImageIndex(index);
+  };
+
+  const closeImageModal = () => {
+    setSelectedImage(null);
+    setCurrentImageIndex(0);
+  };
+
+  const downloadImage = (imageUrl) => {
+    const link = document.createElement("a");
+    link.href = imageUrl;
+    link.download = `hotel_image_${Date.now()}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const rotateImage = () => {
+    if (selectedImage) {
+      setSelectedImage((prev) => ({
+        ...prev,
+        rotate: (prev.rotate || 0) + 90,
+      }));
+    }
+  };
+
+  const flipImage = () => {
+    if (selectedImage) {
+      setSelectedImage((prev) => ({
+        ...prev,
+        flip: prev.flip === "horizontal" ? "vertical" : "horizontal",
+      }));
+    }
+  };
+
+  const switchImage = (direction) => {
+    const currentRequest = filteredRequests.find((request) =>
+      request.images.includes(selectedImage.src)
+    );
+    if (!currentRequest) return;
+
+    const totalImages = currentRequest.images.length;
+    let newIndex =
+      direction === "next"
+        ? (currentImageIndex + 1) % totalImages
+        : (currentImageIndex - 1 + totalImages) % totalImages;
+
+    setCurrentImageIndex(newIndex);
+    setSelectedImage({
+      src: currentRequest.images[newIndex],
+      rotate: 0,
+      flip: null,
+    });
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       <ToastContainer position="top-right" autoClose={3000} />
@@ -227,33 +297,44 @@ const HotelRequestsPage = () => {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Hotel Requests</h1>
           <div className="flex gap-2">
-            <button
+            <motion.button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-1 bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <Filter size={16} />
               {showFilters ? "Hide Filters" : "Show Filters"}
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={handlePrint}
               className="flex items-center gap-1 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <Printer size={16} />
               Print
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={exportToExcel}
               className="flex items-center gap-1 bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <Download size={16} />
               Excel
-            </button>
+            </motion.button>
           </div>
         </div>
 
         {/* Filter Section */}
         {showFilters && (
-          <div className="bg-white p-4 rounded-md shadow mb-4">
+          <motion.div
+            className="bg-white p-4 rounded-md shadow mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -310,20 +391,24 @@ const HotelRequestsPage = () => {
               </div>
             </div>
             <div className="flex justify-end mt-4 gap-2">
-              <button
+              <motion.button
                 onClick={resetFilters}
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 Reset Filters
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 onClick={applyFilters}
                 className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 Apply Filters
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Results Count */}
@@ -336,7 +421,12 @@ const HotelRequestsPage = () => {
         ) : filteredRequests.length === 0 ? (
           <p>No hotel requests found matching your criteria.</p>
         ) : (
-          <div className="print-content bg-white p-4 rounded-md shadow">
+          <motion.div
+            className="print-content bg-white p-4 rounded-md shadow"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b">
@@ -344,6 +434,7 @@ const HotelRequestsPage = () => {
                   <th className="text-left p-2">Room Types</th>
                   <th className="text-left p-2">Request Received Date</th>
                   <th className="text-left p-2">Status</th>
+                  <th className="text-left p-2">Images</th>
                   <th className="text-left p-2">Actions</th>
                 </tr>
               </thead>
@@ -371,18 +462,44 @@ const HotelRequestsPage = () => {
                       </span>
                     </td>
                     <td className="p-2">
-                      <button
+                      {request.images.length > 0 ? (
+                        <div className="flex gap-2">
+                          {request.images.slice(0, 3).map((image, index) => (
+                            <motion.img
+                              key={index}
+                              src={image}
+                              alt={`${request.hotelName} image ${index + 1}`}
+                              className="w-12 h-12 object-cover rounded cursor-pointer"
+                              onClick={() => openImageModal(image, index)}
+                              whileHover={{ scale: 1.1 }}
+                              transition={{ duration: 0.3 }}
+                            />
+                          ))}
+                          {request.images.length > 3 && (
+                            <span className="text-sm text-gray-500">
+                              +{request.images.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        "N/A"
+                      )}
+                    </td>
+                    <td className="p-2">
+                      <motion.button
                         className="bg-blue-500 text-white px-4 py-1 rounded"
                         onClick={() => setSelectedHotelier(request)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                       >
                         Select
-                      </button>
+                      </motion.button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </motion.div>
         )}
 
         {/* Hotel Details Modal */}
@@ -405,6 +522,93 @@ const HotelRequestsPage = () => {
           submitLabel="Send Feedback & Decline"
           submitColor="bg-red-500 hover:bg-red-600"
         />
+
+        {/* Image Modal */}
+        <AnimatePresence>
+          {selectedImage && (
+            <motion.div
+              className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.div
+                className="relative bg-white p-6 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <motion.img
+                  src={selectedImage.src}
+                  alt="Selected hotel image"
+                  className="w-full h-auto max-h-[70vh] object-contain mx-auto"
+                  style={{
+                    transform: `rotate(${selectedImage.rotate || 0}deg) ${
+                      selectedImage.flip === "horizontal"
+                        ? "scaleX(-1)"
+                        : selectedImage.flip === "vertical"
+                        ? "scaleY(-1)"
+                        : ""
+                    }`,
+                  }}
+                  transition={{ duration: 0.3 }}
+                />
+                <div className="flex justify-center gap-4 mt-4">
+                  <motion.button
+                    onClick={() => switchImage("prev")}
+                    className="bg-gray-500 text-white p-2 rounded hover:bg-gray-600"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <ChevronLeft size={24} />
+                  </motion.button>
+                  <motion.button
+                    onClick={() => switchImage("next")}
+                    className="bg-gray-500 text-white p-2 rounded hover:bg-gray-600"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <ChevronRight size={24} />
+                  </motion.button>
+                  <motion.button
+                    onClick={rotateImage}
+                    className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <RotateCw size={24} />
+                  </motion.button>
+                  <motion.button
+                    onClick={flipImage}
+                    className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FlipHorizontal size={24} />
+                  </motion.button>
+                  <motion.button
+                    onClick={() => downloadImage(selectedImage.src)}
+                    className="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Download size={24} />
+                  </motion.button>
+                  <motion.button
+                    onClick={closeImageModal}
+                    className="bg-red-500 text-white p-2 rounded hover:bg-red-600"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <X size={24} />
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

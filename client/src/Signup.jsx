@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import ToastComponent from "./ui/ToastComponent";
 import Loading from "./ui/Loading";
 import icon from "./assets/hostel.gif";
+import OAuth from "./OAuth";
 
 const Signup = () => {
   const [isPasswordShown, setIsPasswordShown] = useState(false);
@@ -144,7 +145,7 @@ const Signup = () => {
             />
           </form>
 
-          <Button text="Login with Google" variant="secondary" />
+          <OAuth />
 
           <p className="text-center text-base font-medium mt-5 mb-1">
             Already have an account?{" "}

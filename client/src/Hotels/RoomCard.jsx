@@ -60,7 +60,7 @@ const RoomCard = ({
 
             <div className="text-right">
               <div className="text-2xl font-bold text-blue-600">
-                ₹{room.price}
+                Rs. {room.price}
               </div>
               <div className="text-gray-500 text-sm">per night</div>
             </div>

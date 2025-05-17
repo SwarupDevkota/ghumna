@@ -1,6 +1,14 @@
 import React, { useContext, useRef, useState } from "react";
 import { AppContent } from "../context/AppContext";
-import { User, Calendar, Settings, LogOut, Edit, Hotel } from "lucide-react";
+import {
+  User,
+  Calendar,
+  Settings,
+  LogOut,
+  Edit,
+  Hotel,
+  Shield,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
@@ -141,7 +149,7 @@ const Sidebar = ({ activeTab, setActiveTab = {} }) => {
           {userData?.name || "Guest User"}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          Member since {formatJoinDate(userData?.joinDate)}
+          Member since 2025
         </p>
       </div>
 
@@ -190,11 +198,15 @@ const Sidebar = ({ activeTab, setActiveTab = {} }) => {
           </button>
 
           <button
-            onClick={() => navigate("/event-registration")}
-            className="flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            onClick={() => setActiveTab("event-registration")}
+            className={`flex items-center px-6 py-3 text-sm font-medium transition-colors ${
+              activeTab === "event-registration"
+                ? "bg-blue-50 text-blue-700 border-l-4 border-blue-600"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            }`}
           >
             <Calendar className="mr-3 h-5 w-5 flex-shrink-0" />
-            Event Registration
+            Events Registration
           </button>
 
           <button
@@ -226,6 +238,16 @@ const Sidebar = ({ activeTab, setActiveTab = {} }) => {
             >
               <Hotel className="mr-3 h-5 w-5 flex-shrink-0" />
               Hotelier Dashboard
+            </Link>
+          )}
+
+          {userData?.role === "admin" && (
+            <Link
+              to="/admin-dashboard"
+              className="flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            >
+              <Shield className="mr-3 h-5 w-5 flex-shrink-0" />
+              Admin Dashboard
             </Link>
           )}
         </nav>

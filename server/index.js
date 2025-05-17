@@ -12,6 +12,7 @@ import cookieParser from "cookie-parser";
 import roomRoutes from "./routes/roomRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import statsRoutes from "./routes/statsRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 dotenv.config();
 
@@ -48,6 +49,8 @@ app.use("/api/hotels", hotelRoutes); // Use hotel routes
 app.use("/api/rooms", roomRoutes);
 app.use("/api/booking", bookingRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/payment", paymentRoutes); // ⬅️ Enable endpoint: /api/pay
+
 
 // 404 Handler for Unknown Routes
 app.use((req, res, next) => {

@@ -9,6 +9,8 @@ import {
   message,
   Spin,
   Avatar,
+  Layout,
+  Typography,
 } from "antd";
 import {
   EyeOutlined,
@@ -18,12 +20,17 @@ import {
 } from "@ant-design/icons";
 import { AppContent } from "../context/AppContext";
 import axios from "axios";
+import HotelSidebar from "./HotelSidebar";
+
+const { Content } = Layout;
+const { Title } = Typography;
 
 const AvailabilityDetails = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [requests, setRequests] = useState([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { userData } = useContext(AppContent);
 
   useEffect(() => {
@@ -173,78 +180,97 @@ const AvailabilityDetails = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1 style={{ marginBottom: 24 }}>Availability Requests</h1>
+    <Layout style={{ minHeight: "100vh" }}>
+      <HotelSidebar
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+      />
 
-      <Spin spinning={loading}>
-        <Table
-          columns={columns}
-          dataSource={requests}
-          rowKey="_id"
-          bordered
-          pagination={{ pageSize: 10 }}
-          locale={{
-            emptyText: userData?.ownedHotel
-              ? "No availability requests found"
-              : "No hotel assigned to your account",
-          }}
-        />
-      </Spin>
-
-      <Modal
-        title="Request Details"
-        visible={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        footer={[
-          <Button key="close" onClick={() => setIsModalVisible(false)}>
-            Close
-          </Button>,
-        ]}
-        width={700}
+      <Layout
+        className="site-layout"
+        style={{
+          marginLeft: isSidebarOpen ? 256 : 64,
+          transition: "margin 0.3s",
+        }}
       >
-        {selectedRequest && (
-          <Descriptions bordered column={2}>
-            <Descriptions.Item label="User Name">
-              {selectedRequest.user?.name}
-            </Descriptions.Item>
-            <Descriptions.Item label="User Email">
-              {selectedRequest.user?.email}
-            </Descriptions.Item>
-            <Descriptions.Item label="Phone">
-              {selectedRequest.phone}
-            </Descriptions.Item>
-            <Descriptions.Item label="Status">
-              <Tag
-                color={
-                  selectedRequest.status === "Approved"
-                    ? "success"
-                    : selectedRequest.status === "Rejected"
-                    ? "error"
-                    : "warning"
-                }
-              >
-                {selectedRequest.status}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Check-In Date">
-              {new Date(selectedRequest.checkInDate).toLocaleString()}
-            </Descriptions.Item>
-            <Descriptions.Item label="Check-Out Date">
-              {new Date(selectedRequest.checkOutDate).toLocaleString()}
-            </Descriptions.Item>
-            <Descriptions.Item label="Guests">
-              {selectedRequest.guests}
-            </Descriptions.Item>
-            <Descriptions.Item label="Rooms Needed">
-              {selectedRequest.roomsNeeded}
-            </Descriptions.Item>
-            <Descriptions.Item label="Special Criteria" span={2}>
-              {selectedRequest.criteria || "None"}
-            </Descriptions.Item>
-          </Descriptions>
-        )}
-      </Modal>
-    </div>
+        <Content style={{ margin: "24px 16px 0", overflow: "initial" }}>
+          <div style={{ padding: 24, background: "#fff" }}>
+            <Title level={2} style={{ marginBottom: 24 }}>
+              Availability Requests
+            </Title>
+
+            <Spin spinning={loading}>
+              <Table
+                columns={columns}
+                dataSource={requests}
+                rowKey="_id"
+                bordered
+                pagination={{ pageSize: 10 }}
+                locale={{
+                  emptyText: userData?.ownedHotel
+                    ? "No availability requests found"
+                    : "No hotel assigned to your account",
+                }}
+              />
+            </Spin>
+
+            <Modal
+              title="Request Details"
+              visible={isModalVisible}
+              onCancel={() => setIsModalVisible(false)}
+              footer={[
+                <Button key="close" onClick={() => setIsModalVisible(false)}>
+                  Close
+                </Button>,
+              ]}
+              width={700}
+            >
+              {selectedRequest && (
+                <Descriptions bordered column={2}>
+                  <Descriptions.Item label="User Name">
+                    {selectedRequest.user?.name}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="User Email">
+                    {selectedRequest.user?.email}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Phone">
+                    {selectedRequest.phone}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Status">
+                    <Tag
+                      color={
+                        selectedRequest.status === "Approved"
+                          ? "success"
+                          : selectedRequest.status === "Rejected"
+                          ? "error"
+                          : "warning"
+                      }
+                    >
+                      {selectedRequest.status}
+                    </Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Check-In Date">
+                    {new Date(selectedRequest.checkInDate).toLocaleString()}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Check-Out Date">
+                    {new Date(selectedRequest.checkOutDate).toLocaleString()}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Guests">
+                    {selectedRequest.guests}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Rooms Needed">
+                    {selectedRequest.roomsNeeded}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Special Criteria" span={2}>
+                    {selectedRequest.criteria || "None"}
+                  </Descriptions.Item>
+                </Descriptions>
+              )}
+            </Modal>
+          </div>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

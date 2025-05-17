@@ -33,13 +33,11 @@ const ProfileInfo = () => {
 
   const handleSave = async () => {
     try {
-      // Create an object with only the changed fields
+      // Create an object with only the changed fields (excluding email)
       const updatedFields = {};
 
       // Compare each field with the original userData
       if (formData.name !== userData.name) updatedFields.name = formData.name;
-      if (formData.email !== userData.email)
-        updatedFields.email = formData.email;
       if (formData.contact !== userData.contact)
         updatedFields.contact = formData.contact;
       if (formData.address !== userData.address)
@@ -96,22 +94,17 @@ const ProfileInfo = () => {
             )}
           </div>
 
-          {/* Email Address */}
+          {/* Email Address - Always Read Only */}
           <div>
             <h4 className="text-sm font-medium text-gray-500">Email Address</h4>
             <div className="mt-1 flex items-center text-sm text-gray-900">
               <Mail className="mr-2 h-4 w-4 text-gray-400" />
-              {editMode ? (
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="p-2 border rounded-md w-full"
-                />
-              ) : (
-                userData?.email
-              )}
+              <input
+                type="email"
+                value={formData.email}
+                readOnly
+                className="p-2 border-none bg-transparent w-full cursor-default"
+              />
             </div>
           </div>
 

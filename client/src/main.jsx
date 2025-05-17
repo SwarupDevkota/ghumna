@@ -6,6 +6,9 @@ import "./App.css";
 import { AppContextProvider } from "./context/AppContext.jsx";
 import "antd/dist/reset.css";
 
+import { Provider } from "react-redux";
+import store from "./redux/store.js";
+
 // Get the root element
 const container = document.getElementById("root");
 
@@ -13,9 +16,11 @@ const container = document.getElementById("root");
 const root = createRoot(container);
 
 root.render(
-  <BrowserRouter>
-    <AppContextProvider>
-      <App />
-    </AppContextProvider>
-  </BrowserRouter>
+  <Provider store={store}>
+    <BrowserRouter>
+      <AppContextProvider>
+        <App />
+      </AppContextProvider>
+    </BrowserRouter>
+  </Provider>
 );

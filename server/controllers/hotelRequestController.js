@@ -45,7 +45,6 @@ export const submitHotel = async (req, res) => {
       additionalDocuments: additionalDocuments || [],
       images: images || [],
       roomTypes: roomTypes || [], // Include roomTypes
-      status: "Pending",
     });
 
     // Save hotel to database
@@ -85,7 +84,7 @@ export const approveHotel = async (req, res) => {
     }
 
     // Check if hotel is still pending
-    if (hotel.status !== "Pending") {
+    if (hotel.status !== "Completed") {
       return res
         .status(400)
         .json({ message: `Hotel is already ${hotel.status}` });
@@ -146,7 +145,7 @@ export const rejectHotel = async (req, res) => {
     }
 
     // Check if hotel is still pending
-    if (hotel.status !== "Pending") {
+    if (hotel.status !== "Completed") {
       return res
         .status(400)
         .json({ message: `Hotel is already ${hotel.status}` });

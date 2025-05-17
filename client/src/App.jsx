@@ -30,52 +30,67 @@ import RoomManagement from "./Hotelier/RoomManagement";
 import AvailabilityDetails from "./Hotelier/AvailabilityDetails";
 import HotelierBookings from "./Hotelier/HotelierBookings";
 import AllBookings from "./AdminPanel/AllBookings";
+import ConfirmationPage from "./Hotels/ConfirmationPage";
+import FinancialLedger from "./Hotelier/FinancialLedger";
+import ProtectedRoute from "./ProtectedRoute";
+import HotelierRoute from "./HotelierRoute";
+import AdminRoute from "./AdminRoute";
+import NotFoundPage from "./NotFoundPage";
 
 function App() {
   return (
     <>
       <Navbar />
-      {/* App Routes */}
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/email-verification" element={<EmailVerification />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/profile" element={<Profile />} />
-
-        <Route path="/hotel-bookings" element={<HotelsBooking />} />
-        <Route path="/hoteliers-form" element={<HotelSubmissionForm />} />
         <Route path="/aboutUs" element={<AboutUs />} />
         <Route path="/fullblogs" element={<BlogsPage />} />
         <Route path="/faq" element={<FAQPage />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/admin-bookings" element={<AllBookings />} />
-
-        <Route path="/hotel-requests" element={<HotelRequestsPage />} />
-        <Route path="/feedback-data" element={<FeedbackPage />} />
-        <Route path="/event-registration" element={<EventRegistrationPage />} />
-        <Route path="/registered-events" element={<RegisteredEventsPage />} />
-        <Route path="/verified-hoteliers" element={<VerifiedHoteliers />} />
-        <Route path="/rejected-hoteliers" element={<RejectedHoteliers />} />
-        <Route path="/local-events" element={<LocalEventsPage />} />
+        <Route path="/hotel-bookings" element={<HotelsBooking />} />
+        <Route path="/hoteliers-form" element={<HotelSubmissionForm />} />
         <Route path="/hotel-detail/:id" element={<HotelDetail />} />
+        <Route path="/local-events" element={<LocalEventsPage />} />
+        <Route path="/confirmation" element={<ConfirmationPage />} />
+        <Route path="/event-registration" element={<EventRegistrationPage />} />
+        {/* Booking flow - protected but doesn't require specific role */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/room-selection/:id" element={<RoomSelectionPage />} />
+          <Route path="/payment" element={<PaymentPage />} />
 
-        <Route path="/room-selection/:id" element={<RoomSelectionPage />} />
-        <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/profile" element={<Profile />} />
+        </Route>
 
-        <Route path="/manage-users" element={<ManageUsers />} />
+        {/* Hotelier-only routes */}
+        <Route element={<HotelierRoute />}>
+          <Route path="/hotelier-dashboard" element={<HotelierDashboard />} />
+          <Route path="/hotelier-rooms" element={<RoomManagement />} />
+          <Route path="/hotelier-bookings" element={<HotelierBookings />} />
+          <Route path="/hotel-financials" element={<FinancialLedger />} />
+          <Route
+            path="/hotelier/availability-details"
+            element={<AvailabilityDetails />}
+          />
+        </Route>
 
-        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+        {/* Admin-only routes */}
+        <Route element={<AdminRoute />}>
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/admin-bookings" element={<AllBookings />} />
+          <Route path="/hotel-requests" element={<HotelRequestsPage />} />
+          <Route path="/feedback-data" element={<FeedbackPage />} />
+          <Route path="/registered-events" element={<RegisteredEventsPage />} />
+          <Route path="/verified-hoteliers" element={<VerifiedHoteliers />} />
+          <Route path="/rejected-hoteliers" element={<RejectedHoteliers />} />
+          <Route path="/manage-users" element={<ManageUsers />} />
+        </Route>
 
-        <Route path="/hotelier-dashboard" element={<HotelierDashboard />} />
-        <Route path="/hotelier-rooms" element={<RoomManagement />} />
-        <Route path="/hotelier-bookings" element={<HotelierBookings />} />
-
-        <Route
-          path="/hotelier/availability-details"
-          element={<AvailabilityDetails />}
-        />
+        {/* Fallback routes */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <Footer />
     </>

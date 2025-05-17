@@ -32,7 +32,7 @@ export const createBooking = async (req, res) => {
 
     const newBooking = await bookingModel.create({
       ...req.body,
-      paymentStatus: req.body.paymentStatus || "Pending",
+      paymentStatus: req.body.paymentStatus || "Completed",
     });
 
     console.log("✅ New Booking Saved:", newBooking);

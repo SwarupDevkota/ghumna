@@ -146,12 +146,12 @@ const PaymentModal = ({ event, onClose }) => {
               <div className="flex justify-between text-sm text-gray-600 mb-2">
                 <span>Tickets:</span>
                 <span>
-                  {formData.tickets} × ${event.price || "50"}
+                  {formData.tickets} × Rs.{event.price || "500"}
                 </span>
               </div>
               <div className="flex justify-between font-semibold text-lg border-t pt-2">
                 <span>Total:</span>
-                <span>${(event.price || 50) * formData.tickets}</span>
+                <span>Rs.{(event.price || 500) * formData.tickets}</span>
               </div>
             </div>
 
@@ -199,7 +199,46 @@ const PaymentModal = ({ event, onClose }) => {
                 Back
               </button>
               <button
-                onClick={onClose}
+                onClick={async () => {
+                  const totalAmount = (event.price || 50) * formData.tickets;
+
+                  const payload = {
+                    return_url: "http://localhost:5173/confirmation",
+                    website_url: "http://localhost:5173",
+                    amount: totalAmount * 100, // in paisa
+                    purchase_order_id: `event-${event._id}-${Date.now()}`,
+                    purchase_order_name: event.eventName,
+                    customer_info: {
+                      name: formData.fullName,
+                      email: formData.email,
+                      phone: formData.phone,
+                    },
+                  };
+
+                  try {
+                    const res = await fetch(
+                      "http://localhost:3000/api/payment/pay",
+                      {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(payload),
+                      }
+                    );
+
+                    const data = await res.json();
+
+                    if (data.payment_url) {
+                      window.location.href = data.payment_url;
+                    } else {
+                      alert("Failed to get Khalti payment URL");
+                    }
+                  } catch (err) {
+                    console.error("Payment error:", err);
+                    alert("Something went wrong while initiating payment.");
+                  }
+                }}
                 className="w-1/2 bg-yellow-500 text-white py-2 rounded-lg font-semibold hover:bg-yellow-600 transition-all duration-300"
               >
                 Complete Payment
