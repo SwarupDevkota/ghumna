@@ -207,7 +207,7 @@ const HotelierDashboard = () => {
           <StatCard
             icon={<DollarSign className="w-6 h-6" />}
             title="Monthly Revenue"
-            value={`$${dashboardData.overview.currentMonthRevenue.toLocaleString()}`}
+            value={`Rs.${dashboardData.overview.currentMonthRevenue.toLocaleString()}`}
             color="bg-green-100 text-green-600"
           />
           <StatCard
@@ -333,7 +333,7 @@ const HotelierDashboard = () => {
                 </div>
                 <div className="mt-2 flex justify-between items-center">
                   <span className="text-sm font-medium">
-                    ${booking.totalPrice.toLocaleString()}
+                    Rs. {booking.totalPrice.toLocaleString()}
                   </span>
                   <span className="text-sm text-gray-500">
                     {booking.numberOfGuests} guests

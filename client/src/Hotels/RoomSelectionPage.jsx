@@ -164,7 +164,7 @@ const RoomSelectionPage = () => {
               ? "Fetching rooms..."
               : error
               ? error
-              : `Available rooms in ${hotel?.hotelName}`}
+              : `Available rooms in {hotel?.hotelName}`}
           </p>
         </div>
       </div>

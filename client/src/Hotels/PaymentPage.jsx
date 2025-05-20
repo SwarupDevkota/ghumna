@@ -82,9 +82,15 @@ const PaymentPage = () => {
         >
           Pay with Khalti
         </button>
+
+        {/* Refund Policy Notice */}
+        <div className="mt-4 text-center text-sm text-red-600 font-medium">
+          ❗ <strong>Please note:</strong> All payments are final. No refunds
+          will be issued once the payment is completed.
+        </div>
       </div>
 
-      {/* Uncomment this section if you want to show a visual booking summary */}
+      {/* Optional booking summary preview */}
       {/* <div className="max-w-2xl mx-auto mt-4">
         {booking && <BookingSummary bookingDetails={booking} />}
       </div> */}

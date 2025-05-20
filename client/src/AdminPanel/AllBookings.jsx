@@ -211,12 +211,8 @@ const AllBookings = () => {
                         Rs. {booking.totalPrice.toLocaleString()}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 rounded text-xs ${getPaymentColor(
-                            booking.paymentStatus
-                          )}`}
-                        >
-                          {booking.paymentStatus}
+                        <span className="px-2 py-1 rounded text-xs bg-green-200 text-green-800">
+                          Paid
                         </span>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -372,14 +368,11 @@ const AllBookings = () => {
                   </p>
                   <p>
                     <strong>Payment Status:</strong>{" "}
-                    <span
-                      className={`px-2 py-1 rounded ${getPaymentColor(
-                        selectedBooking.paymentStatus
-                      )}`}
-                    >
-                      {selectedBooking.paymentStatus}
+                    <span className="px-2 py-1 rounded bg-green-200 text-green-800">
+                      Paid
                     </span>
                   </p>
+
                   <p>
                     <strong>Special Requests:</strong>{" "}
                     {selectedBooking.specialRequests || "None"}

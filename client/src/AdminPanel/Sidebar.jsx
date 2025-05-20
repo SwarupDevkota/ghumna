@@ -10,6 +10,8 @@ import {
   CheckCircle,
   XCircle,
   Users,
+  ArrowBigLeft,
+  ArrowLeftIcon,
 } from "lucide-react";
 
 const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
@@ -104,6 +106,13 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
         >
           <Users size={20} />
           {isSidebarOpen && <span>All Bookings</span>}
+        </Link>
+        <Link
+          to="/profile"
+          className="flex items-center space-x-4 px-4 py-2 hover:bg-blue-500"
+        >
+          <ArrowLeftIcon size={20} />
+          {isSidebarOpen && <span>Back to Profile</span>}
         </Link>
       </nav>
     </div>

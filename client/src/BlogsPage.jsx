@@ -126,7 +126,7 @@ const BlogsPage = () => {
           <h3 className="uppercase text-sm tracking-wide font-bold text-[#E3A726]">
             Our Blogs
           </h3>
-          <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900">
+          <h1 className="text-3xl md:text-5xl font-extrabold text-gray-800 hover:text-[#E3A726] transition">
             Nepal Travel Guide
           </h1>
           <p className="mt-4 text-gray-700 max-w-3xl mx-auto">

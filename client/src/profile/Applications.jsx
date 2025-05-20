@@ -73,11 +73,16 @@ const Applications = () => {
           bordered={false}
           className="main-card"
         >
+          <p className="text-xs text-gray-500 italic mt-1">
+            ⚠️ Contact Hotel for cancellations or refunds after booking
+            confirmation.
+          </p>
           {applications?.length > 0 ? (
             <div className="bookings-container">
               <Divider orientation="left" className="section-divider">
                 Your Bookings
               </Divider>
+             
               <div className="bookings-list">
                 {applications.map((booking) => (
                   <Card key={booking._id} className="booking-card" hoverable>

@@ -282,9 +282,9 @@ const LocalEventsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 py-12">
-      <div className="max-w-7xl mx-auto px-6">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-8 text-center">
-          🎉 Local Events happening in Nepal
+      <div className="text-center mb-12 transition duration-300">
+        <h1 className="text-3xl md:text-5xl font-extrabold text-gray-800 hover:text-[#E3A726] transition">
+          Local Events happening in Nepal
         </h1>
 
         {isLoading ? (

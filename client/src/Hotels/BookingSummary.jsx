@@ -106,14 +106,14 @@ const BookingSummary = ({ selectedRoom, showPaymentMethod = false }) => {
         <div className="flex justify-between pb-4 border-b border-gray-200">
           <div className="font-medium">Room Price</div>
           <div className="text-right font-semibold">
-            ${price} × {nights} nights × {totalRooms} rooms
+            Rs.{price} × {nights} nights × {totalRooms} rooms
           </div>
         </div>
 
         <div className="flex justify-between text-lg">
           <div className="font-bold">Total</div>
           <div className="text-right font-bold text-blue-600">
-            ${totalPrice}
+            Rs. {totalPrice}
           </div>
         </div>
       </div>
